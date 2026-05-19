@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0c0e13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OPS Palembang">
+<meta name="description" content="Driver App — OPS LOG Palembang 2026">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>OPS LOG Palembang 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Epilogue:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<style>
+:root {
+  --bg:          #0c0e13;
+  --bg2:         #13161e;
+  --bg3:         #1a1e2a;
+  --bg4:         #21263a;
+  --border:      rgba(255,255,255,0.07);
+  --border2:     rgba(255,255,255,0.13);
+  --text:        #e4e8f4;
+  --text2:       #7e879e;
+  --text3:       #454d63;
+  --accent:      #5b8ef0;
+  --accent-glow: rgba(91,142,240,0.15);
+  --green:       #34d49e;
+  --green-glow:  rgba(52,212,158,0.12);
+  --red:         #f06b6b;
+  --red-glow:    rgba(240,107,107,0.12);
+  --orange:      #f5a623;
+  --orange-glow: rgba(245,166,35,0.12);
+  --purple:      #a78bfa;
+  --purple-glow: rgba(167,139,250,0.12);
+  --r:    16px;
+  --r-sm: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Epilogue',sans-serif;overflow-x:hidden;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:flex-start;padding:28px 20px 100px;animation:fadeUp .3s ease both;}
+.screen.active{display:flex;}
+.screen.center{justify-content:center;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── LOGIN ── */
+.login-wrap{width:100%;max-width:360px;}
+.app-logo{text-align:center;margin-bottom:36px;}
+.app-logo-mark{width:60px;height:60px;border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:14px;}
+.app-logo-mark.driver-mark{background:var(--accent);box-shadow:0 0 40px var(--accent-glow);}
+.app-logo-mark.admin-mark{background:var(--purple);box-shadow:0 0 40px var(--purple-glow);}
+.app-logo h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.02em;}
+.app-logo p{font-size:12px;color:var(--text2);margin-top:4px;letter-spacing:.05em;text-transform:uppercase;}
+.field-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+select,input[type="text"],input[type="date"],textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-family:'Epilogue',sans-serif;font-size:15px;padding:13px 16px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;}
+select:focus,input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:20px;}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:background .15s,border-color .15s;}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent);}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.num-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:'Syne',sans-serif;font-size:20px;font-weight:600;padding:18px 0;cursor:pointer;transition:background .1s,transform .08s;user-select:none;}
+.num-btn:active{background:var(--bg4);transform:scale(.95);}
+.num-btn.del{font-size:16px;color:var(--text2);}
+.num-btn.empty{background:transparent;border:none;cursor:default;}
+.btn-primary{width:100%;border:none;border-radius:var(--r-sm);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;padding:15px;cursor:pointer;transition:opacity .15s,transform .1s;letter-spacing:.02em;}
+.btn-primary:active{transform:scale(.98);}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;}
+.btn-primary.blue{background:var(--accent);color:#fff;}
+.btn-primary.purple{background:var(--purple);color:#0c0e13;}
+.btn-primary.green{background:var(--green);color:#071a12;}
+.btn-primary.red-btn{background:var(--red);color:#1a0505;}
+.login-error{text-align:center;font-size:13px;color:var(--red);margin-top:12px;min-height:20px;}
+
+/* ── TOPBAR ── */
+.topbar{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.topbar-left h2{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.topbar-left p{font-size:12px;color:var(--text2);margin-top:2px;}
+.btn-logout{font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 12px;cursor:pointer;font-family:'Epilogue',sans-serif;}
+.btn-logout:hover{color:var(--text);}
+
+/* ── STATS ── */
+.stats-row{display:grid;gap:8px;margin-bottom:18px;width:100%;max-width:480px;}
+.stats-row.cols3{grid-template-columns:repeat(3,1fr);}
+.stats-row.cols4{grid-template-columns:repeat(4,1fr);}
+.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 8px;text-align:center;}
+.stat-num{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
+.stat-num.blue{color:var(--accent);}
+.stat-num.green{color:var(--green);}
+.stat-num.orange{color:var(--orange);}
+.stat-num.red{color:var(--red);}
+.stat-num.purple{color:var(--purple);}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.04em;text-transform:uppercase;}
+
+/* ── SEARCH ── */
+.search-box{position:relative;margin-bottom:12px;width:100%;max-width:480px;}
+.search-box input{padding-left:40px;font-size:14px;}
+.search-box::before{content:'🔍';position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
+
+/* ── ORDER LIST ── */
+.order-list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:480px;}
+.order-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s;}
+.order-item:hover{background:var(--bg3);border-color:var(--border2);}
+.order-item-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.order-sn{font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--accent);}
+.status-badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;letter-spacing:.03em;white-space:nowrap;}
+.sb-otw{background:var(--orange-glow);color:var(--orange);border:1px solid rgba(245,166,35,.25);}
+.sb-received{background:var(--green-glow);color:var(--green);border:1px solid rgba(52,212,158,.25);}
+.sb-failed{background:var(--red-glow);color:var(--red);border:1px solid rgba(240,107,107,.25);}
+.order-customer{font-size:14px;font-weight:500;margin-bottom:3px;}
+.order-meta{font-size:12px;color:var(--text2);}
+.order-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;}
+.btn-manual{width:100%;max-width:480px;margin-top:12px;background:transparent;border:1px dashed var(--border2);border-radius:var(--r-sm);color:var(--text2);font-family:'Epilogue',sans-serif;font-size:13px;padding:12px;cursor:pointer;transition:background .15s,color .15s;}
+.btn-manual:hover{background:var(--bg2);color:var(--text);}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;width:100%;max-width:480px;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:99px;color:var(--text2);font-family:'Epilogue',sans-serif;font-size:12px;font-weight:500;padding:6px 14px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* ── BACK BTN ── */
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:20px;background:none;border:none;font-family:'Epilogue',sans-serif;padding:0;}
+.back-btn:hover{color:var(--text);}
+.wrap{width:100%;max-width:480px;}
+
+/* ── ORDER CARD FULL ── */
+.order-card-full{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px;}
+.ocf-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--border);}
+.ocf-row:last-child{border-bottom:none;}
+.ocf-key{font-size:12px;color:var(--text2);}
+.ocf-val{font-size:13px;font-weight:500;text-align:right;max-width:62%;}
+
+/* ── STATUS CHOICE ── */
+.status-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.sc-btn{background:var(--bg2);border:2px solid var(--border);border-radius:var(--r-sm);padding:14px;cursor:pointer;text-align:center;transition:all .15s;}
+.sc-btn.active-green{border-color:var(--green);background:var(--green-glow);}
+.sc-btn.active-red{border-color:var(--red);background:var(--red-glow);}
+.sc-icon{font-size:22px;margin-bottom:6px;}
+.sc-label{font-size:13px;font-weight:600;}
+.sc-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+
+/* ── FORM SECTION ── */
+.form-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px;}
+.form-section h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text2);}
+.field{margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;}
+.field input,.field select,.field textarea{font-size:14px;padding:12px 14px;}
+.field textarea{resize:vertical;min-height:80px;}
+
+/* ── PHOTO UPLOAD ── */
+.photo-upload{border:2px dashed var(--border2);border-radius:var(--r-sm);padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;}
+.photo-upload:hover{border-color:var(--accent);background:var(--accent-glow);}
+.photo-upload input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.photo-upload-icon{font-size:28px;margin-bottom:8px;}
+.photo-upload-text{font-size:13px;color:var(--text2);}
+.photo-preview{display:none;position:relative;border-radius:var(--r-sm);overflow:hidden;margin-top:12px;}
+.photo-preview img{width:100%;max-height:200px;object-fit:cover;display:block;}
+.photo-preview-remove{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* ── ADMIN DATE NAV ── */
+.date-nav{display:flex;align-items:center;gap:10px;margin-bottom:18px;width:100%;max-width:480px;}
+.date-nav-btn{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text2);font-size:18px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.date-nav-btn:hover{color:var(--text);}
+.date-nav-label{flex:1;text-align:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:28px;right:20px;width:56px;height:56px;background:var(--purple);border-radius:50%;border:none;color:#0c0e13;font-size:26px;font-weight:700;cursor:pointer;box-shadow:0 4px 24px rgba(167,139,250,.4);display:flex;align-items:center;justify-content:center;z-index:10;transition:transform .15s;}
+.fab:active{transform:scale(.92);}
+
+/* ── SUCCESS ── */
+.success-wrap{width:100%;max-width:400px;text-align:center;}
+.success-anim{font-size:64px;margin-bottom:20px;animation:popIn .4s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes popIn{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+.success-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;}
+.success-sub{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:24px;}
+.success-detail{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:24px;text-align:left;}
+.sd-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border);}
+.sd-row:last-child{border-bottom:none;}
+.sd-key{color:var(--text2);}
+.sd-val{font-weight:500;}
+.btn-back-recap{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-family:'Syne',sans-serif;font-size:14px;font-weight:600;padding:14px;cursor:pointer;}
+
+/* ── ADMIN ORDER DETAIL ── */
+.admin-action-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.aab{background:var(--bg2);border:2px solid var(--border);border-radius:var(--r-sm);padding:10px 6px;cursor:pointer;text-align:center;transition:all .15s;font-size:11px;font-weight:600;color:var(--text2);}
+.aab:hover{background:var(--bg3);}
+.aab.sel-otw{border-color:var(--orange);background:var(--orange-glow);color:var(--orange);}
+.aab.sel-received{border-color:var(--green);background:var(--green-glow);color:var(--green);}
+.aab.sel-failed{border-color:var(--red);background:var(--red-glow);color:var(--red);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);border:1px solid var(--border2);border-radius:99px;padding:10px 20px;font-size:13px;color:var(--text);white-space:nowrap;transition:transform .3s ease;z-index:999;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── LOADING ── */
+.loading-overlay{position:fixed;inset:0;background:rgba(12,14,19,.88);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:998;backdrop-filter:blur(4px);}
+.loading-overlay.active{display:flex;}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+.loading-text{font-size:14px;color:var(--text2);}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border);width:100%;max-width:480px;margin:6px 0 16px;}
+
+/* ── MANUAL SEARCH ── */
+.manual-input-row{display:flex;gap:10px;margin-bottom:8px;}
+.manual-input-row input{flex:1;font-size:14px;}
+.btn-cari{background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;padding:12px 18px;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+.btn-cari:hover{opacity:.88;}
+.btn-cari:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── EKSPEDISI BADGE ── */
+.eksp-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;letter-spacing:.02em;display:inline-block;}
+.eksp-jnl{background:rgba(91,142,240,.15);color:var(--accent);border:1px solid rgba(91,142,240,.3);}
+.eksp-blindvan{background:var(--purple-glow);color:var(--purple);border:1px solid rgba(167,139,250,.3);}
+.eksp-sentral{background:var(--orange-glow);color:var(--orange);border:1px solid rgba(245,166,35,.3);}
+.eksp-jnt{background:var(--red-glow);color:var(--red);border:1px solid rgba(240,107,107,.3);}
+.eksp-other{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+
+/* ── SECTION HEADER ── */
+.section-hd{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:4px;}
+.section-sub{font-size:13px;color:var(--text2);margin-bottom:18px;}
+
+/* ── REFRESH INDICATOR ── */
+.refresh-bar{display:flex;align-items:center;gap:8px;width:100%;max-width:480px;margin-bottom:10px;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);}
+.refresh-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;transition:background .3s;}
+.refresh-dot.syncing{background:var(--orange);animation:pulse .8s ease infinite;}
+.refresh-dot.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.refresh-label{font-size:11px;color:var(--text3);flex:1;}
+.refresh-label span{color:var(--text2);}
+.btn-refresh-now{font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;font-family:'Epilogue',sans-serif;padding:2px 6px;border-radius:4px;}
+.btn-refresh-now:hover{background:var(--accent-glow);}
+
+/* ── WA BOTTOM SHEET ── */
+.wa-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px);}
+.wa-sheet-overlay.open{opacity:1;pointer-events:all;}
+.wa-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border2);border-radius:20px 20px 0 0;padding:20px 20px 36px;z-index:201;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.6,1);max-width:480px;margin:0 auto;}
+.wa-sheet.open{transform:translateY(0);}
+.wa-sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:99px;margin:0 auto 18px;}
+.wa-sheet-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;margin-bottom:4px;}
+.wa-sheet-meta{font-size:12px;color:var(--text2);margin-bottom:20px;}
+.wa-hp-row{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;}
+.wa-hp-icon{font-size:20px;flex-shrink:0;}
+.wa-hp-number{flex:1;font-size:15px;font-weight:600;color:var(--text);}
+.wa-hp-empty{color:var(--text3);font-size:13px;font-style:italic;}
+.btn-wa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#25D366;color:#fff;border:none;border-radius:var(--r-sm);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;padding:15px;cursor:pointer;transition:opacity .15s,transform .1s;margin-bottom:10px;}
+.btn-wa:active{transform:scale(.97);}
+.btn-wa:hover{opacity:.92;}
+.btn-wa:disabled{opacity:.35;cursor:not-allowed;}
+.btn-wa-icon{font-size:20px;}
+.wa-input-row{display:flex;gap:8px;margin-bottom:14px;}
+.wa-input-row input{flex:1;font-size:14px;padding:11px 14px;}
+.btn-save-hp{background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;padding:11px 16px;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+.btn-save-hp:hover{opacity:.88;}
+.wa-divider{height:1px;background:var(--border);margin:14px 0;}
+.btn-wa-close{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);font-family:'Epilogue',sans-serif;font-size:14px;padding:12px;cursor:pointer;}
+.wa-sheet-also{font-size:11px;color:var(--text3);text-align:center;margin-top:8px;}
+.order-locked{opacity:.6;}
+.drag-handle{cursor:grab;font-size:16px;color:var(--text3);padding:2px 4px;touch-action:none;}
+.order-seq{font-size:11px;color:var(--text3);min-width:16px;}
+.stat-box{cursor:pointer;transition:border-color .15s,background .15s;}
+.stat-box.stat-active{border-color:var(--accent)!important;background:var(--accent-glow)!important;}
+.date-toggle{display:flex;gap:6px;margin-bottom:16px;}
+.dt-btn{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);font-family:'Epilogue',sans-serif;font-size:13px;font-weight:500;padding:9px;cursor:pointer;transition:all .15s;text-align:center;}
+.dt-btn.active{background:var(--accent-glow);border-color:var(--accent);color:var(--text);}
+.history-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:8px;}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:998;display:none;align-items:flex-end;justify-content:center;}
+.confirm-overlay.open{display:flex;}
+.confirm-popup{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r) var(--r) 0 0;padding:24px 20px;width:100%;max-width:480px;animation:slideUp .25s ease;}
+.confirm-popup-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:10px;}
+.confirm-popup-body{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;}
+.confirm-btns{display:flex;gap:10px;}
+.btn-confirm-yes{flex:1;background:var(--green);color:#071a12;border:none;border-radius:var(--r-sm);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;padding:13px;cursor:pointer;}
+.btn-confirm-no{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text2);font-family:'Epilogue',sans-serif;font-size:14px;padding:13px;cursor:pointer;}
+.wa-tpl-btn{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'Epilogue',sans-serif;font-size:12px;padding:9px 12px;cursor:pointer;text-align:left;transition:all .15s;}
+.wa-tpl-btn:hover{background:var(--bg4);color:var(--text);}
+.wa-tpl-btn.active-tpl{background:var(--accent-glow);border-color:var(--accent-border);color:var(--text);}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Memproses...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- WA BOTTOM SHEET -->
+<div class="wa-sheet-overlay" id="waOverlay" onclick="closeWaSheet()"></div>
+<div class="wa-sheet" id="waSheet">
+  <div class="wa-sheet-handle"></div>
+  <div class="wa-sheet-name" id="waSheetName">—</div>
+  <div class="wa-sheet-meta" id="waSheetMeta">—</div>
+
+  <!-- Maps buttons -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <button onclick="openMaps('google')" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Epilogue',sans-serif;font-size:13px;font-weight:500;padding:10px 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+      🗺️ Google Maps
+    </button>
+    <button onclick="openMaps('waze')" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Epilogue',sans-serif;font-size:13px;font-weight:500;padding:10px 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+      🚗 Waze
+    </button>
+  </div>
+
+  <div class="wa-hp-row" id="waHpRow">
+    <div class="wa-hp-icon">📱</div>
+    <div class="wa-hp-number" id="waHpDisplay"><span class="wa-hp-empty">Belum ada nomor HP</span></div>
+  </div>
+  <div class="wa-input-row" id="waInputRow">
+    <input type="tel" id="waHpInput" placeholder="Contoh: 08123456789" inputmode="numeric">
+    <button class="btn-save-hp" onclick="saveHpAndOpen()">Simpan & WA</button>
+  </div>
+
+  <!-- Template pilihan -->
+  <div id="waTplSection" style="display:none;margin-bottom:10px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">Pilih template pesan</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <button class="wa-tpl-btn active-tpl" id="tpl0" onclick="selectTpl(0)">🚚 Driver sedang OTW ke alamat</button>
+      <button class="wa-tpl-btn" id="tpl1" onclick="selectTpl(1)">📦 Konfirmasi siap terima paket</button>
+      <button class="wa-tpl-btn" id="tpl2" onclick="selectTpl(2)">✅ Paket sudah diterima</button>
+      <button class="wa-tpl-btn" id="tpl3" onclick="selectTpl(3)">❌ Gagal antar — minta reschedule</button>
+    </div>
+  </div>
+
+  <button class="btn-wa" id="btnOpenWa" onclick="openWhatsApp()" disabled>
+    <span class="btn-wa-icon">💬</span> Kirim WA
+  </button>
+  <div class="wa-sheet-also" id="waSheetAlso"></div>
+  <div class="wa-divider"></div>
+  <button class="btn-wa-close" onclick="closeWaSheet()">Tutup</button>
+</div>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div class="screen center active" id="screenLogin">
+  <div class="login-wrap">
+    <div class="app-logo">
+      <div class="app-logo-mark driver-mark" id="logoMark">🚚</div>
+      <h1>OPS LOG App</h1>
+      <p>Palembang 2026</p>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div class="field-label">Pilih nama kamu</div>
+      <select id="selectDriver" onchange="onDriverChange()">
+        <option value="">— Pilih —</option>
+        <option value="zaki">Zaki (Driver — JNL)</option>
+        <option value="aidil">Aidil (Driver — Blind Van)</option>
+        <option value="sentral">Sentral Cargo</option>
+        <option value="jnt">J&T Cargo</option>
+        <option value="admin">Admin / Logistik</option>
+      </select>
+    </div>
+    <div class="field-label" style="text-align:center;margin-bottom:12px;">Masukkan PIN</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="dot0"></div>
+      <div class="pin-dot" id="dot1"></div>
+      <div class="pin-dot" id="dot2"></div>
+      <div class="pin-dot" id="dot3"></div>
+    </div>
+    <div class="numpad">
+      <button class="num-btn" onclick="numPress('1')">1</button>
+      <button class="num-btn" onclick="numPress('2')">2</button>
+      <button class="num-btn" onclick="numPress('3')">3</button>
+      <button class="num-btn" onclick="numPress('4')">4</button>
+      <button class="num-btn" onclick="numPress('5')">5</button>
+      <button class="num-btn" onclick="numPress('6')">6</button>
+      <button class="num-btn" onclick="numPress('7')">7</button>
+      <button class="num-btn" onclick="numPress('8')">8</button>
+      <button class="num-btn" onclick="numPress('9')">9</button>
+      <button class="num-btn empty"></button>
+      <button class="num-btn" onclick="numPress('0')">0</button>
+      <button class="num-btn del" onclick="numDel()">⌫</button>
+    </div>
+    <button class="btn-primary blue" id="btnLogin" onclick="doLogin()" disabled>Masuk</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ══════════════ DRIVER RECAP ══════════════ -->
+<div class="screen" id="screenRecap">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2 id="recapName">Halo, Zaki 👋</h2>
+      <p id="recapDate"></p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn-logout" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);font-size:12px;padding:6px 12px;cursor:pointer;" onclick="goHistory()">📋 History</button>
+      <button class="btn-logout" onclick="doLogout()">Keluar</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="date-toggle">
+      <button class="dt-btn active" id="dtToday" onclick="toggleDriverDate('today')">📅 Hari ini</button>
+      <button class="dt-btn" id="dtTomorrow" onclick="toggleDriverDate('tomorrow')">⏭ Besok</button>
+    </div>
+    <div class="section-hd" id="recapDateLabel">Hari ini</div>
+    <div class="section-sub" id="recapSubtitle">Memuat data...</div>
+  </div>
+  <div class="stats-row cols3">
+    <div class="stat-box stat-active" id="statBoxTotal" onclick="setStatFilter('all')"><div class="stat-num" id="statTotal">—</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-box" id="statBoxOtw" onclick="setStatFilter('otw')"><div class="stat-num orange" id="statOtw">—</div><div class="stat-lbl">On the Way</div></div>
+    <div class="stat-box" id="statBoxDone" onclick="setStatFilter('done')"><div class="stat-num green" id="statDone">—</div><div class="stat-lbl">Selesai</div></div>
+  </div>
+  <div class="search-box">
+    <input type="text" id="searchOrder" placeholder="Cari customer atau shipping number..." oninput="filterOrders()">
+  </div>
+  <div class="refresh-bar" id="driverRefreshBar">
+    <div class="refresh-dot" id="driverRefreshDot"></div>
+    <div class="refresh-label" id="driverRefreshLabel">Memuat...</div>
+    <button class="btn-refresh-now" onclick="manualRefreshDriver()">↻ Refresh</button>
+  </div>
+  <div class="order-list" id="orderList">
+    <div class="order-empty">Memuat order...</div>
+  </div>
+  <button class="btn-manual" onclick="goManual()">+ Cari order manual (nomor tidak ada di daftar)</button>
+</div>
+
+<!-- ══════════════ MANUAL SEARCH ══════════════ -->
+<div class="screen" id="screenManual">
+  <div class="wrap">
+    <button class="back-btn" onclick="goScreen('screenRecap')">← Kembali</button>
+    <div class="section-hd">Cari order manual</div>
+    <div class="section-sub">Ketik nomor shipping atau no order</div>
+    <div class="manual-input-row">
+      <input type="text" id="manualInput" placeholder="Contoh: 9230967P6904..." autocapitalize="characters">
+      <button class="btn-cari" id="btnManualCari" onclick="manualCari()">Cari</button>
+    </div>
+    <div id="manualResult"></div>
+  </div>
+</div>
+
+<!-- ══════════════ KONFIRMASI ══════════════ -->
+<div class="screen" id="screenKonfirm">
+  <div class="wrap">
+    <button class="back-btn" id="konfirmBackBtn" onclick="goScreen('screenRecap')">← Kembali ke recap</button>
+    <div class="order-card-full" id="konfirmOrderCard"></div>
+
+    <div style="margin-bottom:16px;">
+      <div class="field-label" style="margin-bottom:10px;">Status pengiriman</div>
+      <div class="status-choice">
+        <div class="sc-btn" id="scBerhasil" onclick="pilihStatus('berhasil')">
+          <div class="sc-icon">✅</div>
+          <div class="sc-label">Berhasil</div>
+          <div class="sc-sub">Diterima customer</div>
+        </div>
+        <div class="sc-btn" id="scGagal" onclick="pilihStatus('gagal')">
+          <div class="sc-icon">❌</div>
+          <div class="sc-label">Gagal kirim</div>
+          <div class="sc-sub">Tidak bisa diantar</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Berhasil -->
+    <div id="formBerhasil" style="display:none;">
+      <div class="form-section">
+        <h3>📋 Detail penerimaan</h3>
+        <div class="field">
+          <label>Tanggal diterima *</label>
+          <input type="date" id="inputTglTiba">
+        </div>
+        <div class="field">
+          <label>Catatan tambahan</label>
+          <textarea id="inputCatatanBerhasil" placeholder="Contoh: diterima suami customer..."></textarea>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>📸 Foto bukti pengiriman</h3>
+        <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
+          <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="onPhotoSelect(event,'photoPreview','photoPreviewImg')">
+          <div class="photo-upload-icon">📷</div>
+          <div class="photo-upload-text">Tap untuk ambil foto atau pilih dari galeri</div>
+        </div>
+        <div class="photo-preview" id="photoPreview">
+          <img id="photoPreviewImg" src="" alt="Preview">
+          <button class="photo-preview-remove" onclick="removePhoto()">✕</button>
+        </div>
+      </div>
+      <button class="btn-primary green" id="btnSubmitBerhasil" onclick="submitKonfirmasi('berhasil')">✓ Konfirmasi Terkirim</button>
+    </div>
+
+    <!-- Form Gagal — hanya update remark -->
+    <div id="formGagal" style="display:none;">
+      <div class="form-section">
+        <h3>❌ Alasan gagal kirim</h3>
+        <div class="field">
+          <label>Pilih alasan *</label>
+          <select id="selectAlasan">
+            <option value="">— Pilih alasan —</option>
+            <option value="Tidak ada di tempat">Tidak ada di tempat</option>
+            <option value="Alamat tidak ditemukan">Alamat tidak ditemukan</option>
+            <option value="Customer menolak">Customer menolak</option>
+            <option value="No. telepon tidak aktif">No. telepon tidak aktif</option>
+            <option value="Barang rusak / retur">Barang rusak / retur</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tanggal pengiriman ulang *</label>
+          <input type="date" id="inputTglReschedule">
+        </div>
+        <div class="field">
+          <label>Keterangan tambahan</label>
+          <textarea id="inputCatatanGagal" placeholder="Jelaskan situasinya..."></textarea>
+        </div>
+      </div>
+      <button class="btn-primary red-btn" id="btnSubmitGagal" onclick="submitKonfirmasi('gagal')">Laporkan Gagal Kirim</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SUCCESS ══════════════ -->
+<div class="screen center" id="screenSuccess">
+  <div class="success-wrap">
+    <div class="success-anim" id="successAnim">✅</div>
+    <div class="success-title" id="successTitle">Berhasil!</div>
+    <p class="success-sub" id="successSub">GSheet telah diupdate.</p>
+    <div class="success-detail" id="successDetailBox"></div>
+    <button class="btn-back-recap" id="btnSuccessBack">← Kembali ke daftar order</button>
+  </div>
+</div>
+
+<!-- ══════════════ HISTORY ══════════════ -->
+<div class="screen" id="screenHistory">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>📋 History konfirmasi</h2>
+      <p>Sesi hari ini</p>
+    </div>
+    <button class="btn-logout" onclick="goScreen('screenRecap')">← Kembali</button>
+  </div>
+  <div class="wrap" style="width:100%;max-width:480px;">
+    <div id="historyList"><div class="order-empty">Belum ada konfirmasi</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ CONFIRM POPUP ══════════════ -->
+<div class="confirm-overlay" id="confirmOverlay" onclick="closeConfirmPopup()">
+  <div class="confirm-popup" id="confirmPopup" onclick="event.stopPropagation()">
+    <div class="confirm-popup-title" id="confirmTitle">Konfirmasi?</div>
+    <div class="confirm-popup-body" id="confirmBody"></div>
+    <div class="confirm-btns">
+      <button class="btn-confirm-no" onclick="closeConfirmPopup()">Batal</button>
+      <button class="btn-confirm-yes" id="confirmYes">Ya, lanjutkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN DASHBOARD ══════════════ -->
+<div class="screen" id="screenAdmin">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>🛡️ Admin Dashboard</h2>
+      <p id="adminUserLabel">OPS LOG Palembang</p>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="btn-logout" onclick="runDiagnostic()" title="Cek koneksi GAS">🔍</button>
+      <button class="btn-logout" onclick="doLogout()">Keluar</button>
+    </div>
+  </div>
+
+  <!-- Date Navigation -->
+  <div class="date-nav">
+    <button class="date-nav-btn" onclick="shiftAdminDate(-1)">‹</button>
+    <div class="date-nav-label" id="adminDateLabel">—</div>
+    <button class="date-nav-btn" onclick="shiftAdminDate(+1)">›</button>
+  </div>
+
+  <!-- Stats per ekspedisi -->
+  <div class="stats-row cols4" id="adminStats">
+    <div class="stat-box"><div class="stat-num blue" id="adStatTotal">—</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-box"><div class="stat-num orange" id="adStatOtw">—</div><div class="stat-lbl">OTW</div></div>
+    <div class="stat-box"><div class="stat-num green" id="adStatDone">—</div><div class="stat-lbl">Received</div></div>
+    <div class="stat-box"><div class="stat-num red" id="adStatFail">—</div><div class="stat-lbl">Gagal</div></div>
+  </div>
+
+  <!-- Tabs per ekspedisi -->
+  <div class="tabs" id="adminTabs">
+    <button class="tab-btn active" onclick="setAdminTab('all')">Semua</button>
+    <button class="tab-btn" onclick="setAdminTab('JNL')">JNL</button>
+    <button class="tab-btn" onclick="setAdminTab('blindvan')">Blind Van</button>
+    <button class="tab-btn" onclick="setAdminTab('Sentral')">Sentral</button>
+    <button class="tab-btn" onclick="setAdminTab('J&T')">J&T</button>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="adminSearch" placeholder="Cari customer atau shipping number..." oninput="filterAdminOrders()">
+  </div>
+  <div class="refresh-bar" id="adminRefreshBar">
+    <div class="refresh-dot" id="adminRefreshDot"></div>
+    <div class="refresh-label" id="adminRefreshLabel">Memuat...</div>
+    <button class="btn-refresh-now" onclick="manualRefreshAdmin()">↻ Refresh</button>
+  </div>
+
+  <div class="order-list" id="adminOrderList">
+    <div class="order-empty">Memuat data...</div>
+  </div>
+
+  <!-- FAB: Tambah Order -->
+  <button class="fab" onclick="goScreen('screenAddOrder')" title="Tambah Order">＋</button>
+</div>
+
+<!-- ══════════════ ADMIN ORDER DETAIL ══════════════ -->
+<div class="screen" id="screenAdminDetail">
+  <div class="wrap">
+    <button class="back-btn" onclick="goScreen('screenAdmin')">← Kembali ke dashboard</button>
+    <div class="section-hd">Edit Order</div>
+    <div class="section-sub">Update status atau remark secara manual</div>
+
+    <div class="order-card-full" id="adminDetailCard"></div>
+
+    <div class="form-section">
+      <h3>🔄 Update Status</h3>
+      <div class="admin-action-row">
+        <div class="aab" id="aabOtw"    onclick="selectAdminStatus('On the way')">📦<br>On the Way</div>
+        <div class="aab" id="aabRecv"   onclick="selectAdminStatus('Received')">✅<br>Received</div>
+        <div class="aab" id="aabFailed" onclick="selectAdminStatus('Gagal Kirim')">❌<br>Gagal</div>
+      </div>
+      <div class="field">
+        <label>Tanggal Tiba (jika Received)</label>
+        <input type="date" id="adminTglTiba">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>📝 Remark</h3>
+      <div class="field">
+        <textarea id="adminRemark" placeholder="Catatan / keterangan..."></textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>🚗 Driver / Resi</h3>
+      <div class="field">
+        <input type="text" id="adminDriver" placeholder="Nama driver atau nomor resi...">
+      </div>
+    </div>
+
+    <button class="btn-primary purple" onclick="submitAdminEdit()">💾 Simpan Perubahan</button>
+  </div>
+</div>
+
+<!-- ══════════════ ADD ORDER (ADMIN) ══════════════ -->
+<div class="screen" id="screenAddOrder">
+  <div class="wrap">
+    <button class="back-btn" onclick="goScreen('screenAdmin')">← Kembali ke dashboard</button>
+    <div class="section-hd">Tambah Order Baru</div>
+    <div class="section-sub">Input order dari Odoo / Metabase</div>
+
+    <div class="form-section">
+      <h3>📋 Data Pengiriman</h3>
+      <div class="field">
+        <label>Ekspedisi *</label>
+        <select id="addEkspedisi">
+          <option value="">— Pilih ekspedisi —</option>
+          <option value="JNL">JNL</option>
+          <option value="Kendaraan sewa blindvan">Kendaraan sewa blindvan</option>
+          <option value="Sentral Cargo">Sentral Cargo</option>
+          <option value="J&T Cargo">J&T Cargo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tanggal Pengiriman *</label>
+        <input type="date" id="addTglKirim">
+      </div>
+      <div class="field">
+        <label>No. Shipping</label>
+        <input type="text" id="addShipping" placeholder="Contoh: 9237349P6904N..." autocapitalize="characters">
+      </div>
+      <div class="field">
+        <label>No. Order</label>
+        <input type="text" id="addNoOrder" placeholder="No. order Odoo...">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>👤 Data Customer</h3>
+      <div class="field">
+        <label>Nama Customer *</label>
+        <input type="text" id="addCustomer" placeholder="Nama lengkap...">
+      </div>
+      <div class="field">
+        <label>Kota / Kecamatan</label>
+        <input type="text" id="addKota" placeholder="Kota tujuan...">
+      </div>
+      <div class="field">
+        <label>Jumlah Koli</label>
+        <input type="text" id="addKoli" placeholder="1">
+      </div>
+      <div class="field">
+        <label>No. HP / WhatsApp Customer</label>
+        <input type="tel" id="addNoHp" placeholder="Contoh: 08123456789" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>🚗 Penugasan</h3>
+      <div class="field">
+        <label>Driver / Resi (opsional)</label>
+        <input type="text" id="addDriver" placeholder="Nama driver atau nomor resi...">
+      </div>
+      <div class="field">
+        <label>Remark</label>
+        <textarea id="addRemark" placeholder="Catatan khusus..."></textarea>
+      </div>
+    </div>
+
+    <button class="btn-primary purple" id="btnAddOrder" onclick="submitAddOrder()">＋ Simpan ke GSheet</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// !! GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT KAMU !!
+// ═══════════════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxPAW-ZQ-3MBdrBdxD-aE73Mc45gP_16Ij0P2uSmZ3o3HKvT50ZBA89TjwNDnAYYBC6gg/exec';
+
+// ══════════════════════════════════════════════════════
+// !! FIREBASE CONFIG — isi dengan config Firebase kamu !!
+// Cara dapat: Firebase Console → Project Settings → Your apps → Config
+// ══════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDPlpkG_nK6PbjzMcmNcoXzJsZktlJ5itE",
+  authDomain:        "ops-palembang.firebaseapp.com",
+  databaseURL:       "https://ops-palembang-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "ops-palembang",
+  storageBucket:     "ops-palembang.firebasestorage.app",
+  messagingSenderId: "816088947240",
+  appId:             "1:816088947240:web:2fff9a0d15f6afe541331d"
+};
+
+// URL halaman tracking customer (setelah deploy ke GitHub Pages)
+const TRACKING_BASE_URL = 'https://angganugrahaprivate-lgtm.github.io/ops-palembang/tracking.html';
+
+// ══════════════════════════════════════════════════════
+// CONFIG — Driver & PIN
+// ══════════════════════════════════════════════════════
+const DRIVERS = {
+  zaki:    { name: 'Zaki',    pin: '1234', role: 'driver', ekspedisi: 'JNL',                    ekspedisiLabel: 'JNL' },
+  aidil:   { name: 'Aidil',   pin: '5678', role: 'driver', ekspedisi: 'Kendaraan Sewa BlindVan', ekspedisiLabel: 'Blind Van' },
+  sentral: { name: 'Sentral', pin: '1111', role: 'driver', ekspedisi: 'Sentral Cargo',           ekspedisiLabel: 'Sentral Cargo' },
+  jnt:     { name: 'J&T',     pin: '2222', role: 'driver', ekspedisi: 'J&T Cargo',               ekspedisiLabel: 'J&T Cargo',
+             ekspedisiAlt: 'J&T Cargo OS' },  // alias untuk OS
+  admin:   { name: 'Admin',   pin: '0000', role: 'admin' }
+};
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let currentDriver   = null;
+let allOrders       = [];
+let filteredOrders  = [];
+let selectedOrder   = null;
+let selectedStatus  = null;
+let adminOrders     = [];
+let adminFiltered   = [];
+let adminTab        = 'all';
+let adminDate       = todayISO();
+let adminSelectedStatus = null;
+let photoFile       = null;
+let pinBuffer       = '';
+let fromManual      = false;
+
+// Cache & refresh state
+let lastRefreshTime    = null;
+let isRefreshing       = false;
+const CACHE_KEY_DRIVER = 'opslog_cache_driver';
+const CACHE_KEY_ADMIN  = 'opslog_cache_admin';
+
+// WA sheet state
+let waCurrentOrder = null;
+
+// ══════════════════════════════════════════════════════
+// GPS TRACKING STATE
+// ══════════════════════════════════════════════════════
+let gpsWatchId        = null;  // ID dari watchPosition
+let gpsCurrentPos     = null;  // koordinat terakhir
+let gpsFirebaseDB     = null;  // Firebase DB instance
+let gpsActiveOrderId  = null;  // order yang sedang di-track
+let gpsUpdateInterval = null;  // interval kirim ke Firebase
+
+// Init Firebase
+function initFirebase() {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    gpsFirebaseDB = firebase.database();
+    console.log('[GPS] Firebase ready');
+  } catch(e) {
+    console.warn('[GPS] Firebase init error:', e.message);
+  }
+}
+
+// Mulai watch GPS saat app dibuka (background, silent)
+function startGPSWatch() {
+  if (!navigator.geolocation) return;
+  if (gpsWatchId !== null) return; // sudah aktif
+
+  gpsWatchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      gpsCurrentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy };
+    },
+    (err) => console.warn('[GPS] Error:', err.message),
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+  );
+  console.log('[GPS] Watch started');
+}
+
+function stopGPSWatch() {
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+  stopTrackingOrder();
+}
+
+// Mulai kirim GPS ke Firebase untuk order tertentu
+function startTrackingOrder(orderKey) {
+  if (!gpsFirebaseDB) return;
+  gpsActiveOrderId = orderKey;
+
+  // Kirim langsung sekarang
+  pushGPSToFirebase(orderKey);
+
+  // Lanjut kirim setiap 10 detik
+  if (gpsUpdateInterval) clearInterval(gpsUpdateInterval);
+  gpsUpdateInterval = setInterval(() => pushGPSToFirebase(orderKey), 10000);
+  console.log('[GPS] Tracking started for order:', orderKey);
+}
+
+function pushGPSToFirebase(orderKey) {
+  if (!gpsCurrentPos || !gpsFirebaseDB || !orderKey) return;
+  const ref = gpsFirebaseDB.ref(`tracking/${orderKey}`);
+  ref.set({
+    lat:       gpsCurrentPos.lat,
+    lng:       gpsCurrentPos.lng,
+    acc:       gpsCurrentPos.acc,
+    ts:        Date.now(),
+    driver:    currentDriver?.name || '—',
+    status:    'active'
+  }).catch(e => console.warn('[GPS] Push error:', e));
+}
+
+// Hentikan tracking & expire data saat order selesai
+function stopTrackingOrder(orderKey) {
+  if (gpsUpdateInterval) { clearInterval(gpsUpdateInterval); gpsUpdateInterval = null; }
+  const key = orderKey || gpsActiveOrderId;
+  if (key && gpsFirebaseDB) {
+    // Set status delivered — halaman customer akan tampil pesan "sudah diterima"
+    gpsFirebaseDB.ref(`tracking/${key}`).update({ status: 'delivered', ts: Date.now() })
+      .then(() => {
+        // Hapus data GPS setelah 30 menit (privasi driver)
+        setTimeout(() => gpsFirebaseDB.ref(`tracking/${key}`).remove(), 30 * 60 * 1000);
+      })
+      .catch(e => console.warn('[GPS] Stop error:', e));
+  }
+  gpsActiveOrderId = null;
+}
+
+// Generate link tracking unik per order
+function getTrackingLink(order) {
+  const key = (order.noOrder || order.shippingNumber || '').replace(/[^a-zA-Z0-9]/g, '');
+  return `${TRACKING_BASE_URL}?order=${key}`;
+}
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.remove('active');
+  void el.offsetWidth;
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showLoading(text = 'Memproses...') {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingOverlay').classList.add('active');
+}
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+function showToast(msg, dur = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function isoToDisplay(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+  return `${+d} ${months[+m-1]} ${y}`;
+}
+
+function isoToFull(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+function shiftDate(iso, days) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function ekspedisiTag(eksp) {
+  const e = (eksp || '').toLowerCase();
+  if (e.includes('jnl'))        return `<span class="eksp-tag eksp-jnl">JNL</span>`;
+  if (e.includes('blindvan') || e.includes('blind van') || e.includes('kendaraan')) return `<span class="eksp-tag eksp-blindvan">Blind Van</span>`;
+  if (e.includes('sentral'))    return `<span class="eksp-tag eksp-sentral">Sentral</span>`;
+  if (e.includes('j&t') || e.includes('jnt')) return `<span class="eksp-tag eksp-jnt">J&T</span>`;
+  return `<span class="eksp-tag eksp-other">${eksp||'—'}</span>`;
+}
+
+function statusBadge(status) {
+  const s = (status || '').toLowerCase();
+  if (s.includes('received'))                         return { cls:'sb-received', txt:'Received' };
+  if (s.includes('gagal') || s.includes('failed'))    return { cls:'sb-failed',   txt:'Gagal' };
+  return { cls:'sb-otw', txt:'On the Way' };
+}
+
+// ══════════════════════════════════════════════════════
+// GAS CALL — semua via GET
+// ══════════════════════════════════════════════════════
+async function gasCall(params) {
+  const url = new URL(GAS_URL);
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null) continue;
+    // 'payload' selalu JSON, sisanya langsung string
+    if (k === 'payload') {
+      url.searchParams.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
+    } else {
+      url.searchParams.append(k, String(v));
+    }
+  }
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('GAS response bukan JSON: ' + text.slice(0, 200)); }
+}
+
+// ══════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════
+function onDriverChange() {
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('btnLogin').disabled = true;
+  const key = document.getElementById('selectDriver').value;
+  const mark = document.getElementById('logoMark');
+  if (key === 'admin') { mark.className='app-logo-mark admin-mark'; mark.textContent='🛡️'; }
+  else                 { mark.className='app-logo-mark driver-mark'; mark.textContent='🚚'; }
+}
+
+function numPress(n) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += n;
+  updatePinDots();
+  if (pinBuffer.length === 4) document.getElementById('btnLogin').disabled = false;
+}
+
+function numDel() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDots();
+  document.getElementById('btnLogin').disabled = true;
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++)
+    document.getElementById('dot' + i).classList.toggle('filled', i < pinBuffer.length);
+}
+
+function doLogin() {
+  const key = document.getElementById('selectDriver').value;
+  if (!key) { document.getElementById('loginError').textContent = 'Pilih nama dulu.'; return; }
+  const driver = DRIVERS[key];
+  if (pinBuffer !== driver.pin) {
+    document.getElementById('loginError').textContent = 'PIN salah. Coba lagi.';
+    pinBuffer = ''; updatePinDots();
+    document.getElementById('btnLogin').disabled = true;
+    return;
+  }
+  currentDriver = driver;
+  document.getElementById('loginError').textContent = '';
+
+  // Init Firebase & GPS otomatis untuk driver (bukan admin)
+  if (driver.role === 'driver') {
+    initFirebase();
+    // Minta izin GPS — saat pertama kali, browser akan tampil popup izin
+    startGPSWatch();
+  }
+
+  if (driver.role === 'admin') {
+    adminDate = todayISO();
+    goScreen('screenAdmin');
+    loadAdminDashboard();
+  } else {
+    goScreen('screenRecap');
+    loadRecap();
+  }
+}
+
+function doLogout() {
+  stopGPSWatch(); // Hentikan GPS saat logout
+  currentDriver = null; allOrders = []; adminOrders = [];
+  pinBuffer = ''; updatePinDots();
+  document.getElementById('selectDriver').value = '';
+  document.getElementById('btnLogin').disabled = true;
+  document.getElementById('logoMark').className = 'app-logo-mark driver-mark';
+  document.getElementById('logoMark').textContent = '🚚';
+  goScreen('screenLogin');
+}
+
+// ══════════════════════════════════════════════════════
+// CACHE HELPERS
+// ══════════════════════════════════════════════════════
+function saveCache(key, data) {
+  try { sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch(e) {}
+}
+function loadCache(key) {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+// ══════════════════════════════════════════════════════
+// REFRESH INDICATOR HELPERS
+// ══════════════════════════════════════════════════════
+function setRefreshState(scope, state, label) {
+  const dot = document.getElementById(scope + 'RefreshDot');
+  const lbl = document.getElementById(scope + 'RefreshLabel');
+  if (!dot || !lbl) return;
+  dot.className = 'refresh-dot' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
+  lbl.innerHTML = label;
+}
+
+function refreshTimestampLabel(scope) {
+  if (!lastRefreshTime) return;
+  const secs = Math.round((Date.now() - lastRefreshTime) / 1000);
+  const txt = secs < 10 ? 'baru saja' : secs < 60 ? `${secs} detik lalu` : `${Math.round(secs/60)} menit lalu`;
+  setRefreshState(scope, 'ok', `Terakhir diperbarui: <span>${txt}</span>`);
+}
+
+// ══════════════════════════════════════════════════════
+// DRIVER RECAP
+// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// DRIVER RECAP — tanggal toggle (hari ini / besok)
+// ══════════════════════════════════════════════════════
+let driverViewDate = 'today'; // 'today' | 'tomorrow'
+
+function toggleDriverDate(val) {
+  driverViewDate = val;
+  document.getElementById('dtToday').classList.toggle('active', val === 'today');
+  document.getElementById('dtTomorrow').classList.toggle('active', val === 'tomorrow');
+  const tanggal = val === 'today' ? todayISO() : shiftDate(todayISO(), 1);
+  document.getElementById('recapDateLabel').textContent = val === 'today' ? 'Hari ini' : 'Besok — ' + isoToDisplay(tanggal);
+  allOrders = [];
+  orderSort = [];
+  loadRecap();
+}
+
+async function loadRecap() {
+  document.getElementById('recapName').textContent = `Halo, ${currentDriver.name} 👋`;
+  document.getElementById('recapDate').textContent = isoToFull(todayISO());
+
+  const tanggal  = driverViewDate === 'today' ? todayISO() : shiftDate(todayISO(), 1);
+  const cacheKey = CACHE_KEY_DRIVER + '_' + currentDriver.ekspedisi + '_' + tanggal;
+  const cached   = loadCache(cacheKey);
+
+  if (cached) {
+    allOrders = cached.data;
+    restoreSort();
+    renderRecap();
+    setRefreshState('driver', 'syncing', 'Memperbarui data...');
+  } else {
+    document.getElementById('statTotal').textContent = '—';
+    document.getElementById('statOtw').textContent   = '—';
+    document.getElementById('statDone').textContent  = '—';
+    document.getElementById('orderList').innerHTML   = '<div class="order-empty">Memuat order...</div>';
+    showLoading('Memuat order...');
+    setRefreshState('driver', 'syncing', 'Memuat data...');
+  }
+
+  await fetchDriverOrders(cacheKey, tanggal);
+  if (!cached) hideLoading();
+}
+
+async function fetchDriverOrders(cacheKey, tanggal) {
+  isRefreshing = true;
+  setRefreshState('driver', 'syncing', 'Menyinkronkan...');
+  try {
+    let orders = [];
+
+    if (driverViewDate === 'today') {
+      // Pakai Active Orders sheet (cepat!) untuk hari ini
+      const res = await gasCall({ action: 'getActiveOrders', ekspedisi: currentDriver.ekspedisi });
+      orders = res.orders || [];
+      if (currentDriver.ekspedisiAlt) {
+        const res2 = await gasCall({ action: 'getActiveOrders', ekspedisi: currentDriver.ekspedisiAlt });
+        orders = orders.concat(res2.orders || []);
+      }
+    } else {
+      // Besok — pakai getOrders biasa
+      const res = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisi, tanggal });
+      orders = res.orders || [];
+      if (currentDriver.ekspedisiAlt) {
+        const res2 = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisiAlt, tanggal });
+        orders = orders.concat(res2.orders || []);
+      }
+    }
+
+    allOrders = orders;
+    saveCache(cacheKey, allOrders);
+    lastRefreshTime = Date.now();
+    restoreSort();
+    renderRecap();
+    refreshTimestampLabel('driver');
+  } catch (e) {
+    setRefreshState('driver', 'error', `<span style="color:var(--red)">Gagal sync — ${e.message}</span>`);
+    if (!allOrders.length) showToast('Gagal memuat data: ' + e.message);
+  }
+  isRefreshing = false;
+}
+
+async function manualRefreshDriver() {
+  if (isRefreshing) return;
+  const tanggal  = driverViewDate === 'today' ? todayISO() : shiftDate(todayISO(), 1);
+  const cacheKey = CACHE_KEY_DRIVER + '_' + currentDriver.ekspedisi + '_' + tanggal;
+  await fetchDriverOrders(cacheKey, tanggal);
+}
+
+// ── Drag sort & stat filter ──
+let orderSort    = []; // array index sesuai urutan drag
+let statFilter   = 'all'; // 'all' | 'otw' | 'done'
+let historyItems = []; // order yang sudah dikonfirmasi sesi ini
+
+function restoreSort() {
+  // Inisialisasi urutan default 0,1,2,...
+  orderSort = allOrders.map((_, i) => i);
+  // Restore dari localStorage jika ada
+  try {
+    const saved = localStorage.getItem('opslog_sort_' + (currentDriver?.ekspedisi||''));
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Validasi: pastikan semua index masih valid
+      if (parsed.length === allOrders.length) orderSort = parsed;
+    }
+  } catch(e) {}
+}
+
+function saveSort() {
+  try {
+    localStorage.setItem('opslog_sort_' + (currentDriver?.ekspedisi||''), JSON.stringify(orderSort));
+  } catch(e) {}
+}
+
+function setStatFilter(f) {
+  statFilter = f;
+  document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('stat-active'));
+  const map = { all: 'statBoxTotal', otw: 'statBoxOtw', done: 'statBoxDone' };
+  if (map[f]) document.getElementById(map[f])?.classList.add('stat-active');
+  filterOrders();
+}
+
+function renderRecap() {
+  const total = allOrders.length;
+  const done  = allOrders.filter(o => {
+    const s = (o.status || '').toLowerCase();
+    return s.includes('received') || s.includes('gagal') || s.includes('failed');
+  }).length;
+  const otw = total - done;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statOtw').textContent   = otw;
+  document.getElementById('statDone').textContent  = done;
+  document.getElementById('recapSubtitle').textContent = total > 0
+    ? `${total} order — ekspedisi ${currentDriver.ekspedisiLabel}`
+    : `Tidak ada order (${currentDriver.ekspedisiLabel})`;
+
+  filterOrders();
+}
+
+function filterOrders() {
+  const q = (document.getElementById('searchOrder').value || '').toLowerCase();
+  let base = orderSort.map(i => ({ order: allOrders[i], origIdx: i }));
+
+  // Filter stat
+  if (statFilter === 'otw') {
+    base = base.filter(({ order: o }) => {
+      const s = (o.status||'').toLowerCase();
+      return !s.includes('received') && !s.includes('gagal') && !s.includes('failed');
+    });
+  } else if (statFilter === 'done') {
+    base = base.filter(({ order: o }) => {
+      const s = (o.status||'').toLowerCase();
+      return s.includes('received') || s.includes('gagal') || s.includes('failed');
+    });
+  }
+
+  // Filter search
+  if (q) {
+    base = base.filter(({ order: o }) =>
+      (o.shippingNumber||'').toLowerCase().includes(q) ||
+      (o.namaCustomer  ||'').toLowerCase().includes(q) ||
+      (o.noOrder       ||'').toLowerCase().includes(q)
+    );
+  }
+
+  filteredOrders = base.map(x => x.order);
+
+  const list = document.getElementById('orderList');
+  if (filteredOrders.length === 0) {
+    list.innerHTML = `<div class="order-empty">${allOrders.length === 0 ? 'Tidak ada order' : 'Tidak ditemukan'}</div>`;
+    return;
+  }
+
+  list.innerHTML = filteredOrders.map((o, i) => {
+    const { cls, txt } = statusBadge(o.status);
+    const isLocked = (o.status||'').toLowerCase().includes('received');
+    const seqNum   = base[i] ? base[i].origIdx + 1 : i + 1;
+    return `
+    <div class="order-item${isLocked ? ' order-locked' : ''}" 
+         draggable="${!isLocked}" 
+         data-idx="${base[i]?.origIdx ?? i}"
+         ondragstart="onDragStart(event,${base[i]?.origIdx ?? i})"
+         ondragover="onDragOver(event)"
+         ondrop="onDrop(event,${base[i]?.origIdx ?? i})"
+         ondragend="onDragEnd(event)"
+         onclick="pilihOrder(${i})">
+      <div class="order-item-top">
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${!isLocked ? `<span class="drag-handle" onclick="event.stopPropagation()">⠿</span>` : ''}
+          <span class="order-seq">${seqNum}</span>
+          <span class="order-sn">${o.shippingNumber || o.noOrder || '—'}</span>
+        </div>
+        <span class="status-badge ${cls}">${txt}</span>
+      </div>
+      <div class="order-customer">${o.namaCustomer || '—'}</div>
+      <div class="order-meta" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>${o.kota || ''} · ${o.koli || '?'} koli</span>
+        <button onclick="event.stopPropagation();openWaSheet(filteredOrders[${i}])" 
+          style="background:${o.noHp ? 'var(--green-glow)' : 'var(--bg3)'};border:1px solid ${o.noHp ? 'rgba(52,212,158,.3)' : 'var(--border)'};border-radius:6px;color:${o.noHp ? 'var(--green)' : 'var(--text3)'};font-size:11px;padding:3px 8px;cursor:pointer;">💬 WA</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Drag & Drop ──
+let dragSrcIdx = null;
+
+function onDragStart(e, idx) {
+  dragSrcIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.5';
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function onDrop(e, targetIdx) {
+  e.preventDefault();
+  if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+  const srcPos    = orderSort.indexOf(dragSrcIdx);
+  const targetPos = orderSort.indexOf(targetIdx);
+  if (srcPos === -1 || targetPos === -1) return;
+  orderSort.splice(srcPos, 1);
+  orderSort.splice(targetPos, 0, dragSrcIdx);
+  saveSort();
+  filterOrders();
+}
+
+function onDragEnd(e) {
+  e.currentTarget.style.opacity = '';
+  dragSrcIdx = null;
+}
+
+// ══════════════════════════════════════════════════════
+// PILIH ORDER → KONFIRMASI (driver)
+// ══════════════════════════════════════════════════════
+function pilihOrder(idx) {
+  const o = filteredOrders[idx];
+  // Kunci order yang sudah Received
+  if ((o.status||'').toLowerCase().includes('received')) {
+    showToast('Order ini sudah Received dan tidak bisa diubah.');
+    return;
+  }
+  selectedOrder = o;
+
+  // Mulai GPS tracking untuk order ini (otomatis, silent)
+  const orderKey = (o.noOrder || o.shippingNumber || '').replace(/[^a-zA-Z0-9]/g, '');
+  if (orderKey && currentDriver?.role === 'driver') startTrackingOrder(orderKey);
+
+  openKonfirm('screenRecap');
+}
+
+function openKonfirm(backScreen) {
+  selectedStatus = null; photoFile = null;
+  document.getElementById('scBerhasil').className = 'sc-btn';
+  document.getElementById('scGagal').className    = 'sc-btn';
+  document.getElementById('formBerhasil').style.display = 'none';
+  document.getElementById('formGagal').style.display    = 'none';
+  document.getElementById('inputTglTiba').value          = todayISO();
+  document.getElementById('inputTglReschedule').value    = shiftDate(todayISO(), 1);
+  document.getElementById('inputCatatanBerhasil').value  = '';
+  document.getElementById('inputCatatanGagal').value     = '';
+  document.getElementById('selectAlasan').value          = '';
+  document.getElementById('photoPreview').style.display  = 'none';
+  document.getElementById('photoPreviewImg').src         = '';
+  document.getElementById('konfirmBackBtn').onclick      = () => goScreen(backScreen);
+  renderKonfirmCard();
+  goScreen('screenKonfirm');
+}
+
+function renderKonfirmCard() {
+  const o = selectedOrder;
+  if (!o) return;
+  const { cls, txt } = statusBadge(o.status);
+  document.getElementById('konfirmOrderCard').innerHTML = `
+    <div class="ocf-row"><span class="ocf-key">Shipping number</span><span class="ocf-val" style="font-size:12px;color:var(--accent)">${o.shippingNumber||'—'}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Customer</span><span class="ocf-val">${o.namaCustomer||'—'}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Ekspedisi</span><span class="ocf-val">${ekspedisiTag(o.ekspedisi)}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Kota</span><span class="ocf-val">${o.kota||'—'}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Koli</span><span class="ocf-val">${o.koli||'—'}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Driver/Resi</span><span class="ocf-val" style="font-size:12px">${o.driver||'(kosong)'}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Status</span><span class="ocf-val"><span class="status-badge ${cls}">${txt}</span></span></div>
+  `;
+}
+
+function pilihStatus(s) {
+  selectedStatus = s;
+  document.getElementById('scBerhasil').className = 'sc-btn' + (s === 'berhasil' ? ' active-green' : '');
+  document.getElementById('scGagal').className    = 'sc-btn' + (s === 'gagal'    ? ' active-red'   : '');
+  document.getElementById('formBerhasil').style.display = s === 'berhasil' ? 'block' : 'none';
+  document.getElementById('formGagal').style.display    = s === 'gagal'    ? 'block' : 'none';
+}
+
+// ══════════════════════════════════════════════════════
+// FOTO
+// ══════════════════════════════════════════════════════
+function onPhotoSelect(e, previewId, imgId) {
+  const f = e.target.files[0];
+  if (!f) return;
+  if (f.size > 5 * 1024 * 1024) { showToast('Foto terlalu besar (maks 5MB)'); return; }
+  photoFile = f;
+  document.getElementById(imgId).src = URL.createObjectURL(f);
+  document.getElementById(previewId).style.display = 'block';
+}
+function removePhoto() {
+  photoFile = null;
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoPreviewImg').src = '';
+}
+
+// ══════════════════════════════════════════════════════
+// SUBMIT KONFIRMASI (driver)
+// ══════════════════════════════════════════════════════
+// ── Popup konfirmasi sebelum submit ──
+function showConfirmPopup(title, body, onConfirm) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmBody').innerHTML    = body;
+  document.getElementById('confirmYes').onclick       = () => { closeConfirmPopup(); onConfirm(); };
+  document.getElementById('confirmOverlay').classList.add('open');
+  document.getElementById('confirmPopup').classList.add('open');
+}
+function closeConfirmPopup() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  document.getElementById('confirmPopup').classList.remove('open');
+}
+
+async function submitKonfirmasi(tipe) {
+  const o = selectedOrder;
+  if (!o || (!o.rowIndex && o.rowIndex !== -1)) { showToast('Data order tidak valid.'); return; }
+
+  if (tipe === 'berhasil') {
+    const tgl     = document.getElementById('inputTglTiba').value;
+    const catatan = document.getElementById('inputCatatanBerhasil').value.trim();
+    if (!tgl) { showToast('Isi tanggal diterima dulu!'); return; }
+
+    showConfirmPopup(
+      'Konfirmasi pengiriman berhasil?',
+      `<b>${o.namaCustomer||'—'}</b><br>${o.shippingNumber||o.noOrder||'—'}<br><br>Tanggal diterima: <b>${isoToDisplay(tgl)}</b><br>Status → <span style="color:var(--green)">Received</span>`,
+      async () => {
+        document.getElementById('btnSubmitBerhasil').disabled = true;
+        showLoading('Mengupdate GSheet...');
+        try {
+          await gasCall({
+            action: 'updateOrder',
+            payload: {
+              rowIndex:      o.rowIndex,
+              shippingNumber: o.shippingNumber || o.noOrder, // untuk resolve rowIndex=-1
+              tglTiba:       isoToDisplay(tgl),
+              status:        'Received',
+              remark:        catatan || undefined,
+              driverIfEmpty: currentDriver.name
+            }
+          });
+          const idx = allOrders.findIndex(x => (x.rowIndex === o.rowIndex) || (x.shippingNumber === o.shippingNumber));
+          if (idx !== -1) { allOrders[idx].status = 'Received'; allOrders[idx].tglTiba = tgl; }
+
+          // Stop GPS tracking — customer lihat pesan "sudah diterima"
+          const orderKey = (o.noOrder || o.shippingNumber || '').replace(/[^a-zA-Z0-9]/g, '');
+          stopTrackingOrder(orderKey);
+
+          // Simpan ke history
+          historyItems.unshift({ ...o, status: 'Received', tglTiba: isoToDisplay(tgl), confirmedBy: currentDriver.name, confirmedAt: new Date().toLocaleTimeString('id-ID') });
+
+          showSuccessScreen('berhasil', { shippingNumber: o.shippingNumber, namaCustomer: o.namaCustomer, tglTiba: isoToDisplay(tgl), driver: currentDriver.name }, 'screenRecap');
+        } catch (e) { showToast('Gagal update: ' + e.message); }
+        hideLoading();
+        document.getElementById('btnSubmitBerhasil').disabled = false;
+      }
+    );
+
+  } else {
+    const alasan      = document.getElementById('selectAlasan').value;
+    const catatan     = document.getElementById('inputCatatanGagal').value.trim();
+    const tglReschedule = document.getElementById('inputTglReschedule').value;
+    if (!alasan)       { showToast('Pilih alasan gagal kirim!'); return; }
+    if (!tglReschedule) { showToast('Isi tanggal pengiriman ulang!'); return; }
+
+    const remarkFull = [alasan, catatan].filter(Boolean).join(' — ');
+
+    showConfirmPopup(
+      'Laporkan gagal kirim?',
+      `<b>${o.namaCustomer||'—'}</b><br>${o.shippingNumber||o.noOrder||'—'}<br><br>Alasan: <b>${alasan}</b><br>Kirim ulang: <b>${isoToDisplay(tglReschedule)}</b>`,
+      async () => {
+        document.getElementById('btnSubmitGagal').disabled = true;
+        showLoading('Melaporkan gagal kirim...');
+        try {
+          await gasCall({
+            action: 'updateOrder',
+            payload: {
+              rowIndex:       o.rowIndex,
+              shippingNumber: o.shippingNumber || o.noOrder,
+              remark:         remarkFull,
+              tglPengiriman:  isoToDisplay(tglReschedule) // update kolom P
+              // status TIDAK diubah
+            }
+          });
+          const idx = allOrders.findIndex(x => (x.rowIndex === o.rowIndex) || (x.shippingNumber === o.shippingNumber));
+          if (idx !== -1) { allOrders[idx].remark = remarkFull; allOrders[idx].tglPengiriman = tglReschedule; }
+
+          // Simpan ke history
+          historyItems.unshift({ ...o, remark: remarkFull, reschedule: isoToDisplay(tglReschedule), confirmedBy: currentDriver.name, confirmedAt: new Date().toLocaleTimeString('id-ID') });
+
+          showSuccessScreen('gagal', { shippingNumber: o.shippingNumber, namaCustomer: o.namaCustomer, alasan, catatan, reschedule: isoToDisplay(tglReschedule), driver: currentDriver.name }, 'screenRecap');
+        } catch (e) { showToast('Gagal lapor: ' + e.message); }
+        hideLoading();
+        document.getElementById('btnSubmitGagal').disabled = false;
+      }
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// SUCCESS SCREEN
+// ══════════════════════════════════════════════════════
+function showSuccessScreen(tipe, info, backScreen) {
+  document.getElementById('btnSuccessBack').onclick = () => { goScreen(backScreen); renderRecap(); };
+
+  if (tipe === 'berhasil') {
+    document.getElementById('successAnim').textContent  = '✅';
+    document.getElementById('successTitle').textContent = 'Berhasil dikirim!';
+    document.getElementById('successSub').textContent   = 'GSheet OPS LOG Palembang telah diupdate.';
+    document.getElementById('successDetailBox').innerHTML = `
+      <div class="sd-row"><span class="sd-key">Shipping</span><span class="sd-val">${info.shippingNumber||'—'}</span></div>
+      <div class="sd-row"><span class="sd-key">Customer</span><span class="sd-val">${info.namaCustomer||'—'}</span></div>
+      <div class="sd-row"><span class="sd-key">Tanggal diterima</span><span class="sd-val">${info.tglTiba}</span></div>
+      <div class="sd-row"><span class="sd-key">Status</span><span class="sd-val" style="color:var(--green)">Received ✓</span></div>
+      <div class="sd-row"><span class="sd-key">Oleh</span><span class="sd-val">${info.driver}</span></div>
+    `;
+  } else {
+    document.getElementById('successAnim').textContent  = '📋';
+    document.getElementById('successTitle').textContent = 'Laporan tercatat';
+    document.getElementById('successSub').textContent   = 'Gagal kirim tercatat & jadwal diperbarui.';
+    document.getElementById('successDetailBox').innerHTML = `
+      <div class="sd-row"><span class="sd-key">Shipping</span><span class="sd-val">${info.shippingNumber||'—'}</span></div>
+      <div class="sd-row"><span class="sd-key">Customer</span><span class="sd-val">${info.namaCustomer||'—'}</span></div>
+      <div class="sd-row"><span class="sd-key">Alasan</span><span class="sd-val">${info.alasan}</span></div>
+      ${info.catatan ? `<div class="sd-row"><span class="sd-key">Catatan</span><span class="sd-val">${info.catatan}</span></div>` : ''}
+      <div class="sd-row"><span class="sd-key">Kirim ulang</span><span class="sd-val" style="color:var(--orange)">${info.reschedule}</span></div>
+      <div class="sd-row"><span class="sd-key">Oleh</span><span class="sd-val">${info.driver}</span></div>
+    `;
+  }
+  goScreen('screenSuccess');
+}
+
+// ── History konfirmasi ──
+function goHistory() {
+  renderHistory();
+  goScreen('screenHistory');
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!historyItems.length) {
+    list.innerHTML = '<div class="order-empty">Belum ada konfirmasi di sesi ini</div>';
+    return;
+  }
+  list.innerHTML = historyItems.map(o => {
+    const isReceived = (o.status||'').toLowerCase().includes('received');
+    return `
+    <div class="order-item">
+      <div class="order-item-top">
+        <span class="order-sn">${o.shippingNumber||o.noOrder||'—'}</span>
+        <span class="status-badge ${isReceived ? 'sb-received' : 'sb-otw'}">${isReceived ? 'Received' : 'Reschedule'}</span>
+      </div>
+      <div class="order-customer">${o.namaCustomer||'—'}</div>
+      <div class="order-meta">
+        ${isReceived ? `Diterima: ${o.tglTiba}` : `Kirim ulang: ${o.reschedule}`}
+        · ${o.confirmedAt} · oleh ${o.confirmedBy}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// MANUAL SEARCH (driver)
+// ══════════════════════════════════════════════════════
+function goManual() {
+  document.getElementById('manualInput').value = '';
+  document.getElementById('manualResult').innerHTML = '';
+  goScreen('screenManual');
+}
+
+async function manualCari() {
+  const q = document.getElementById('manualInput').value.trim();
+  if (!q) { showToast('Ketik nomor order dulu'); return; }
+  document.getElementById('btnManualCari').disabled = true;
+  showLoading('Mencari order...');
+  try {
+    const result = await gasCall({ action: 'searchOrder', query: q.toUpperCase() });
+    if (result && result.found) {
+      selectedOrder = result;
+      document.getElementById('manualResult').innerHTML = `
+        <div class="order-item" style="margin-top:14px;" onclick="goKonfirmFromManual()">
+          <div class="order-item-top">
+            <span class="order-sn">${result.shippingNumber || result.noOrder}</span>
+            <span class="status-badge ${statusBadge(result.status).cls}">${statusBadge(result.status).txt}</span>
+          </div>
+          <div class="order-customer">${result.namaCustomer || '—'}</div>
+          <div class="order-meta">${ekspedisiTag(result.ekspedisi)} · ${result.kota||''}</div>
+          <div style="margin-top:10px;font-size:12px;color:var(--accent);">Tap untuk konfirmasi →</div>
+        </div>`;
+    } else {
+      document.getElementById('manualResult').innerHTML = `<div class="order-empty" style="margin-top:20px;">Order tidak ditemukan.</div>`;
+    }
+  } catch (e) { showToast('Error: ' + e.message); }
+  hideLoading();
+  document.getElementById('btnManualCari').disabled = false;
+}
+
+function goKonfirmFromManual() {
+  if (!selectedOrder) return;
+  openKonfirm('screenManual');
+}
+
+document.getElementById('manualInput').addEventListener('keydown', e => { if (e.key === 'Enter') manualCari(); });
+
+// ══════════════════════════════════════════════════════
+// ADMIN DASHBOARD
+// ══════════════════════════════════════════════════════
+async function loadAdminDashboard() {
+  document.getElementById('adminUserLabel').textContent = `Login sebagai: ${currentDriver.name}`;
+  document.getElementById('adminDateLabel').textContent = isoToFull(adminDate);
+
+  // ── Tampil cache dulu ──
+  const cacheKey = CACHE_KEY_ADMIN + '_' + adminDate;
+  const cached = loadCache(cacheKey);
+  if (cached) {
+    adminOrders = cached.data;
+    renderAdminStats();
+    filterAdminOrders();
+    setRefreshState('admin', 'syncing', 'Memperbarui data...');
+  } else {
+    document.getElementById('adminOrderList').innerHTML = '<div class="order-empty">Memuat data...</div>';
+    document.getElementById('adStatTotal').textContent  = '—';
+    document.getElementById('adStatOtw').textContent    = '—';
+    document.getElementById('adStatDone').textContent   = '—';
+    document.getElementById('adStatFail').textContent   = '—';
+    showLoading('Memuat semua order...');
+    setRefreshState('admin', 'syncing', 'Memuat data pertama kali...');
+  }
+
+  await fetchAdminOrders(cacheKey);
+  if (!cached) hideLoading();
+}
+
+async function fetchAdminOrders(cacheKey) {
+  isRefreshing = true;
+  setRefreshState('admin', 'syncing', 'Menyinkronkan...');
+  try {
+    const res = await gasCall({ action: 'getAllOrders', tanggal: adminDate });
+
+    // Debug: log respons GAS ke console
+    console.log('[OPS LOG] getAllOrders response:', JSON.stringify(res).slice(0, 300));
+
+    if (res.error) {
+      setRefreshState('admin', 'error', `<span style="color:var(--red)">GAS Error: ${res.error}</span>`);
+      showToast('GAS error: ' + res.error);
+      isRefreshing = false; return;
+    }
+
+    adminOrders = res.orders || [];
+    console.log('[OPS LOG] Total orders loaded:', adminOrders.length, '| Tanggal:', adminDate);
+    if (adminOrders.length > 0) {
+      console.log('[OPS LOG] Sample tglPengiriman:', adminOrders.slice(0,3).map(o=>o.tglPengiriman));
+    }
+
+    saveCache(cacheKey, adminOrders);
+    lastRefreshTime = Date.now();
+    renderAdminStats();
+    filterAdminOrders();
+    refreshTimestampLabel('admin');
+  } catch (e) {
+    console.error('[OPS LOG] fetchAdminOrders error:', e);
+    setRefreshState('admin', 'error', `<span style="color:var(--red)">Gagal sync: ${e.message}</span>`);
+    if (!adminOrders.length) showToast('Gagal memuat: ' + e.message);
+  }
+  isRefreshing = false;
+}
+
+// ══════════════════════════════════════════════════════
+// DIAGNOSTIC — cek koneksi & format data GAS
+// ══════════════════════════════════════════════════════
+async function runDiagnostic() {
+  showLoading('Menjalankan diagnosa...');
+  const lines = [];
+  try {
+    // Test 1: getAllOrders dengan tanggal aktif
+    lines.push(`📅 Tanggal dicari: ${adminDate}`);
+    const res = await gasCall({ action: 'getAllOrders', tanggal: adminDate });
+    if (res.error) { lines.push(`❌ GAS error: ${res.error}`); }
+    else {
+      lines.push(`✅ GAS OK — ${res.orders?.length ?? 0} order ditemukan`);
+      if (res.orders?.length === 0) {
+        // Coba tanggal berbeda untuk lihat apakah ada data sama sekali
+        const yesterday = shiftDate(adminDate, -1);
+        const res2 = await gasCall({ action: 'getAllOrders', tanggal: yesterday });
+        lines.push(`🔎 Coba kemarin (${yesterday}): ${res2.orders?.length ?? 0} order`);
+        const tomorrow  = shiftDate(adminDate, +1);
+        const res3 = await gasCall({ action: 'getAllOrders', tanggal: tomorrow });
+        lines.push(`🔎 Coba besok (${tomorrow}): ${res3.orders?.length ?? 0} order`);
+
+        // Ambil 3 baris pertama sheet untuk lihat format tanggalnya
+        lines.push('');
+        lines.push('💡 Jika ada data di tanggal lain, kemungkinan format tanggal di sheet berbeda.');
+        lines.push('Buka browser Console (F12) untuk lihat detail format data.');
+      } else {
+        const sample = res.orders[0];
+        lines.push(`📋 Contoh: ${sample.namaCustomer} | tgl: ${sample.tglPengiriman} | status: ${sample.status}`);
+      }
+    }
+  } catch(e) {
+    lines.push(`❌ Gagal koneksi ke GAS: ${e.message}`);
+    lines.push('Pastikan GAS sudah di-deploy ulang setelah perubahan kode.');
+  }
+  hideLoading();
+  alert('=== OPS LOG Diagnostic ===\n\n' + lines.join('\n'));
+}
+
+async function manualRefreshAdmin() {
+  if (isRefreshing) return;
+  const cacheKey = CACHE_KEY_ADMIN + '_' + adminDate;
+  await fetchAdminOrders(cacheKey);
+}
+
+function renderAdminStats() {
+  const total    = adminOrders.length;
+  const received = adminOrders.filter(o => (o.status||'').toLowerCase().includes('received')).length;
+  const failed   = adminOrders.filter(o => { const s = (o.status||'').toLowerCase(); return s.includes('gagal')||s.includes('failed'); }).length;
+  const otw      = total - received - failed;
+
+  document.getElementById('adStatTotal').textContent = total;
+  document.getElementById('adStatOtw').textContent   = otw;
+  document.getElementById('adStatDone').textContent  = received;
+  document.getElementById('adStatFail').textContent  = failed;
+}
+
+function setAdminTab(tab) {
+  adminTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('adminSearch').value = '';
+  filterAdminOrders();
+}
+
+function filterAdminOrders() {
+  const q = (document.getElementById('adminSearch').value || '').toLowerCase();
+  adminFiltered = adminOrders.filter(o => {
+    const eksp = (o.ekspedisi || '').toLowerCase();
+    let tabMatch = true;
+    if (adminTab === 'JNL')      tabMatch = eksp.includes('jnl');
+    else if (adminTab === 'blindvan') tabMatch = eksp.includes('blindvan') || eksp.includes('blind van') || eksp.includes('kendaraan');
+    else if (adminTab === 'Sentral')  tabMatch = eksp.includes('sentral');
+    else if (adminTab === 'J&T')      tabMatch = eksp.includes('j&t') || eksp.includes('jnt');
+    const qMatch = !q ||
+      (o.shippingNumber||'').toLowerCase().includes(q) ||
+      (o.namaCustomer  ||'').toLowerCase().includes(q) ||
+      (o.noOrder       ||'').toLowerCase().includes(q) ||
+      (o.kota          ||'').toLowerCase().includes(q);
+    return tabMatch && qMatch;
+  });
+
+  const list = document.getElementById('adminOrderList');
+  if (adminFiltered.length === 0) {
+    list.innerHTML = `<div class="order-empty">Tidak ada order${adminTab !== 'all' ? ' untuk tab ini' : ''}</div>`;
+    return;
+  }
+  list.innerHTML = adminFiltered.map((o, i) => {
+    const { cls, txt } = statusBadge(o.status);
+    return `
+    <div class="order-item" onclick="openAdminDetail(${i})">
+      <div class="order-item-top">
+        <span class="order-sn">${o.shippingNumber || o.noOrder || '—'}</span>
+        <span class="status-badge ${cls}">${txt}</span>
+      </div>
+      <div class="order-customer">${o.namaCustomer || '—'}</div>
+      <div class="order-meta" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>${ekspedisiTag(o.ekspedisi)} · ${o.kota||''} · ${o.koli||'?'} koli</span>
+        <button onclick="event.stopPropagation();openWaSheet(adminFiltered[${i}])" style="background:${o.noHp ? 'var(--green-glow)' : 'var(--bg3)'};border:1px solid ${o.noHp ? 'rgba(52,212,158,.3)' : 'var(--border)'};border-radius:6px;color:${o.noHp ? 'var(--green)' : 'var(--text3)'};font-size:11px;padding:3px 8px;cursor:pointer;">💬 WA</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function shiftAdminDate(days) {
+  adminDate = shiftDate(adminDate, days);
+  document.getElementById('adminDateLabel').textContent = isoToFull(adminDate);
+  loadAdminDashboard();
+}
+
+// ══════════════════════════════════════════════════════
+// ADMIN ORDER DETAIL / EDIT
+// ══════════════════════════════════════════════════════
+function openAdminDetail(idx) {
+  selectedOrder = adminFiltered[idx];
+  adminSelectedStatus = selectedOrder.status || '';
+  const o = selectedOrder;
+
+  // Render card
+  const { cls, txt } = statusBadge(o.status);
+  document.getElementById('adminDetailCard').innerHTML = `
+    <div class="ocf-row"><span class="ocf-key">Shipping</span><span class="ocf-val" style="font-size:12px;color:var(--accent)">${o.shippingNumber||'—'}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Customer</span><span class="ocf-val">${o.namaCustomer||'—'}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Ekspedisi</span><span class="ocf-val">${ekspedisiTag(o.ekspedisi)}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Kota</span><span class="ocf-val">${o.kota||'—'}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Koli</span><span class="ocf-val">${o.koli||'—'}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Tgl Kirim</span><span class="ocf-val">${isoToDisplay(o.tglPengiriman)}</span></div>
+    <div class="ocf-row"><span class="ocf-key">Status</span><span class="ocf-val"><span class="status-badge ${cls}">${txt}</span></span></div>
+    <div class="ocf-row"><span class="ocf-key">Remark</span><span class="ocf-val" style="font-size:12px">${o.remark||'—'}</span></div>
+  `;
+
+  // Pre-fill form
+  document.getElementById('adminTglTiba').value = o.tglTiba  || todayISO();
+  document.getElementById('adminRemark').value  = o.remark   || '';
+  document.getElementById('adminDriver').value  = o.driver   || '';
+
+  // Status buttons
+  updateAdminStatusBtns(adminSelectedStatus);
+  goScreen('screenAdminDetail');
+}
+
+function selectAdminStatus(s) {
+  adminSelectedStatus = s;
+  updateAdminStatusBtns(s);
+}
+
+function updateAdminStatusBtns(s) {
+  const sl = (s || '').toLowerCase();
+  document.getElementById('aabOtw').className    = 'aab' + (sl.includes('way') ? ' sel-otw' : '');
+  document.getElementById('aabRecv').className   = 'aab' + (sl.includes('received') ? ' sel-received' : '');
+  document.getElementById('aabFailed').className = 'aab' + ((sl.includes('gagal')||sl.includes('failed')) ? ' sel-failed' : '');
+}
+
+async function submitAdminEdit() {
+  const o = selectedOrder;
+  if (!o || !o.rowIndex) { showToast('Data tidak valid'); return; }
+
+  const tglTiba = document.getElementById('adminTglTiba').value;
+  const remark  = document.getElementById('adminRemark').value.trim();
+  const driver  = document.getElementById('adminDriver').value.trim();
+
+  showLoading('Menyimpan perubahan...');
+  try {
+    await gasCall({
+      action: 'updateOrder',
+      payload: {
+        rowIndex: o.rowIndex,
+        status:   adminSelectedStatus || undefined,
+        tglTiba:  (adminSelectedStatus || '').toLowerCase().includes('received') ? isoToDisplay(tglTiba) : undefined,
+        remark:   remark  || undefined,
+        driver:   driver  || undefined
+      }
+    });
+
+    // Update local adminOrders
+    const idx = adminOrders.findIndex(x => x.rowIndex === o.rowIndex);
+    if (idx !== -1) {
+      if (adminSelectedStatus) adminOrders[idx].status = adminSelectedStatus;
+      if (remark) adminOrders[idx].remark = remark;
+      if (driver) adminOrders[idx].driver = driver;
+    }
+
+    showToast('✓ Perubahan disimpan');
+    renderAdminStats();
+    filterAdminOrders();
+    goScreen('screenAdmin');
+  } catch (e) {
+    showToast('Gagal simpan: ' + e.message);
+  }
+  hideLoading();
+}
+
+// ══════════════════════════════════════════════════════
+// ADD ORDER (admin)
+// ══════════════════════════════════════════════════════
+function initAddOrderForm() {
+  document.getElementById('addTglKirim').value = adminDate;
+  document.getElementById('addShipping').value = '';
+  document.getElementById('addNoOrder').value  = '';
+  document.getElementById('addCustomer').value = '';
+  document.getElementById('addKota').value     = '';
+  document.getElementById('addKoli').value     = '';
+  document.getElementById('addDriver').value   = '';
+  document.getElementById('addRemark').value   = '';
+  document.getElementById('addEkspedisi').value = '';
+  document.getElementById('addNoHp').value     = '';
+}
+
+document.getElementById('screenAddOrder').addEventListener('animationstart', initAddOrderForm);
+
+// ══════════════════════════════════════════════════════
+// WHATSAPP BOTTOM SHEET
+// ══════════════════════════════════════════════════════
+
+// noHp dari GAS sudah berupa "628xxx" (hasil parse wa.me/628xxx)
+// Tampilkan sebagai "0851..." untuk keterbacaan
+function waNumToDisplay(waNum) {
+  if (!waNum) return '';
+  // "628xxx" → "08xxx"
+  if (waNum.startsWith('62')) return '0' + waNum.slice(2);
+  return waNum;
+}
+
+let selectedTpl = 0;
+
+const WA_TEMPLATES = [
+  (o) => {
+    const alamat      = [o.alamat, o.kecamatan, o.kota].filter(Boolean).join(', ') || o.kota || '';
+    const trackingKey = (o.noOrder || o.shippingNumber || '').replace(/[^a-zA-Z0-9]/g, '');
+    const trackLink   = trackingKey ? `${TRACKING_BASE_URL}?order=${trackingKey}` : '';
+    const mapsLink    = alamat ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(alamat)}` : '';
+    const linkLine    = trackLink
+      ? `\n\n🔴 Pantau posisi driver secara live:\n${trackLink}`
+      : mapsLink ? `\n\n🗺️ Lihat rute pengiriman:\n${mapsLink}` : '';
+    return `Halo ${o.namaCustomer||'Bapak/Ibu'} 👋\n\nKami dari *OPS LOG Palembang* ingin memberitahu bahwa driver kami sedang dalam perjalanan (*OTW*) menuju alamat Anda:\n\n📦 No. Order: *${o.noOrder||o.shippingNumber||'—'}*\n📍 Alamat: ${alamat||'—'}\n🚚 Ekspedisi: ${o.ekspedisi||'—'}${linkLine}\n\nMohon pastikan ada di tempat untuk menerima paket. Terima kasih! 🙏`;
+  },
+  (o) => `Halo ${o.namaCustomer||'Bapak/Ibu'} 👋\n\nPaket Anda akan segera tiba!\n\n📦 No. Order: *${o.noOrder||o.shippingNumber||'—'}*\n🚚 Ekspedisi: ${o.ekspedisi||'—'}\n\nMohon pastikan ada di tempat dan siapkan penerimaan paket. Terima kasih! 🙏`,
+  (o) => `Halo ${o.namaCustomer||'Bapak/Ibu'} 👋\n\nKami ingin mengkonfirmasi bahwa paket Anda telah berhasil diterima hari ini.\n\n📦 No. Order: *${o.noOrder||o.shippingNumber||'—'}*\n✅ Status: *Diterima*\n\nTerima kasih telah berbelanja! 🙏`,
+  (o) => `Halo ${o.namaCustomer||'Bapak/Ibu'} 👋\n\nSayangnya driver kami tidak berhasil mengantarkan paket ke alamat Anda hari ini.\n\n📦 No. Order: *${o.noOrder||o.shippingNumber||'—'}*\n❌ Status: Gagal antar\n\nMohon hubungi kami untuk menjadwalkan ulang pengiriman. Terima kasih! 🙏`,
+];
+
+function selectTpl(idx) {
+  selectedTpl = idx;
+  document.querySelectorAll('.wa-tpl-btn').forEach((b,i) => {
+    b.classList.toggle('active-tpl', i === idx);
+  });
+}
+
+function openMaps(app) {
+  const o = waCurrentOrder;
+  if (!o) return;
+  const alamat = [o.alamat, o.kecamatan, o.kota].filter(Boolean).join(', ') || o.kota || '';
+  if (!alamat) { showToast('Alamat tidak tersedia'); return; }
+  const q = encodeURIComponent(alamat);
+  if (app === 'waze') {
+    window.open(`https://waze.com/ul?q=${q}&navigate=yes`, '_blank');
+  } else {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${q}`, '_blank');
+  }
+}
+
+function openWaSheet(order) {
+  waCurrentOrder = order;
+  selectedTpl = 0;
+  const waNum = order.noHp || '';
+
+  document.getElementById('waSheetName').textContent = order.namaCustomer || '—';
+  document.getElementById('waSheetMeta').textContent =
+    [order.ekspedisi, order.kota, order.shippingNumber || order.noOrder].filter(Boolean).join(' · ') || '—';
+
+  if (waNum) {
+    const display = waNumToDisplay(waNum);
+    document.getElementById('waHpDisplay').innerHTML =
+      `<span style="font-weight:700">${display}</span>` +
+      `<span style="font-size:11px;color:var(--text3);margin-left:6px;">(${waNum})</span>`;
+    document.getElementById('waInputRow').style.display = 'none';
+    document.getElementById('btnOpenWa').disabled = false;
+    document.getElementById('waSheetAlso').textContent = 'Nomor dari kolom AF Google Sheet';
+    document.getElementById('waTplSection').style.display = 'block';
+    // Reset template ke OTW
+    selectTpl(0);
+  } else {
+    document.getElementById('waHpDisplay').innerHTML = `<span class="wa-hp-empty">Kolom AF kosong — isi manual di bawah</span>`;
+    document.getElementById('waInputRow').style.display = 'flex';
+    document.getElementById('waHpInput').value = '';
+    document.getElementById('btnOpenWa').disabled = true;
+    document.getElementById('waSheetAlso').textContent = 'Nomor disimpan ke kolom AF sheet';
+    document.getElementById('waTplSection').style.display = 'none';
+  }
+
+  document.getElementById('waOverlay').classList.add('open');
+  document.getElementById('waSheet').classList.add('open');
+}
+
+function closeWaSheet() {
+  document.getElementById('waOverlay').classList.remove('open');
+  document.getElementById('waSheet').classList.remove('open');
+  waCurrentOrder = null;
+}
+
+function openWhatsApp() {
+  const o = waCurrentOrder;
+  if (!o) return;
+
+  let waNum = o.noHp;
+  if (!waNum) {
+    const raw = document.getElementById('waHpInput').value.trim().replace(/\D/g, '');
+    if (!raw) { showToast('Nomor HP tidak valid'); return; }
+    waNum = raw.startsWith('0') ? '62' + raw.slice(1) : raw.startsWith('62') ? raw : '62' + raw;
+  }
+
+  const tplFn = WA_TEMPLATES[selectedTpl] || WA_TEMPLATES[0];
+  const msg   = encodeURIComponent(tplFn(o));
+  window.open(`https://wa.me/${waNum}?text=${msg}`, '_blank');
+}
+
+async function saveHpAndOpen() {
+  const o = waCurrentOrder;
+  if (!o || !o.rowIndex) { showToast('Data order tidak valid'); return; }
+  const raw = document.getElementById('waHpInput').value.trim().replace(/\D/g, '');
+  if (!raw || raw.length < 8) { showToast('Nomor HP tidak valid'); return; }
+
+  const waNum = raw.startsWith('0') ? '62' + raw.slice(1) : raw.startsWith('62') ? raw : '62' + raw;
+  const waLink = `wa.me/${waNum}`;
+
+  try {
+    await gasCall({
+      action: 'updateOrder',
+      payload: { rowIndex: o.rowIndex, noHp: waLink }
+    });
+    // Update local state — simpan sebagai "628xxx" sama seperti yang di-parse GAS
+    o.noHp = waNum;
+    const updateLocal = (arr) => {
+      const idx = arr.findIndex(x => x.rowIndex === o.rowIndex);
+      if (idx !== -1) arr[idx].noHp = waNum;
+    };
+    updateLocal(allOrders);
+    updateLocal(adminOrders);
+
+    showToast('✓ Nomor HP disimpan ke sheet');
+    openWaSheet(o); // refresh tampilan sheet
+    setTimeout(openWhatsApp, 350);
+  } catch(e) {
+    showToast('Gagal simpan: ' + e.message);
+  }
+}
+
+// Swipe-down untuk tutup
+document.getElementById('waSheet').addEventListener('touchstart', e => {
+  const startY = e.touches[0].clientY;
+  document.getElementById('waSheet').addEventListener('touchend', function handler(e2) {
+    if (e2.changedTouches[0].clientY - startY > 80) closeWaSheet();
+    document.getElementById('waSheet').removeEventListener('touchend', handler);
+  });
+});
+</script>
+
+<script>
+async function submitAddOrder() {
+  const eksp     = document.getElementById('addEkspedisi').value;
+  const customer = document.getElementById('addCustomer').value.trim();
+  const tgl      = document.getElementById('addTglKirim').value;
+
+  if (!eksp)     { showToast('Pilih ekspedisi dulu!'); return; }
+  if (!customer) { showToast('Nama customer wajib diisi!'); return; }
+  if (!tgl)      { showToast('Tanggal pengiriman wajib diisi!'); return; }
+
+  document.getElementById('btnAddOrder').disabled = true;
+  showLoading('Menyimpan ke GSheet...');
+  try {
+    const res = await gasCall({
+      action: 'addOrder',
+      payload: {
+        shippingNumber: document.getElementById('addShipping').value.trim() || undefined,
+        noOrder:        document.getElementById('addNoOrder').value.trim()  || undefined,
+        namaCustomer:   customer,
+        kota:           document.getElementById('addKota').value.trim()     || undefined,
+        ekspedisi:      eksp,
+        koli:           document.getElementById('addKoli').value.trim()     || undefined,
+        driver:         document.getElementById('addDriver').value.trim()   || undefined,
+        remark:         document.getElementById('addRemark').value.trim()   || undefined,
+        noHp:           document.getElementById('addNoHp').value.trim()     || undefined,
+        tglPengiriman:  isoToDisplay(tgl),
+        status:         'On the way'
+      }
+    });
+
+    if (res.success) {
+      showToast(`✓ Order ${customer} disimpan (baris ${res.rowIndex})`);
+      // Reload admin data jika tanggal sama
+      if (tgl === adminDate) {
+        await loadAdminDashboard();
+      }
+      goScreen('screenAdmin');
+    } else {
+      showToast('Gagal simpan: ' + (res.error || 'unknown'));
+    }
+  } catch (e) {
+    showToast('Error: ' + e.message);
+  }
+  hideLoading();
+  document.getElementById('btnAddOrder').disabled = false;
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════
+// PWA — Service Worker Registration
+// ═══════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+
+// Install prompt — simpan untuk ditampilkan manual
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Tampilkan banner install jika belum diinstall
+  setTimeout(() => showInstallBanner(), 3000);
+});
+
+function showInstallBanner() {
+  if (!deferredInstallPrompt) return;
+  if (localStorage.getItem('pwa_installed')) return;
+  document.getElementById('installBanner').style.display = 'flex';
+}
+
+function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      localStorage.setItem('pwa_installed', '1');
+      document.getElementById('installBanner').style.display = 'none';
+    }
+    deferredInstallPrompt = null;
+  });
+}
+
+function dismissInstallBanner() {
+  document.getElementById('installBanner').style.display = 'none';
+  localStorage.setItem('pwa_install_dismissed', '1');
+}
+</script>
+
+<!-- Install Banner -->
+<div id="installBanner" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:460px;background:#1a1e2a;border:1px solid rgba(91,142,240,0.4);border-radius:14px;padding:14px 16px;z-index:997;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+  <div style="font-size:28px;">📲</div>
+  <div style="flex:1;">
+    <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#e4e8f4;">Install sebagai aplikasi</div>
+    <div style="font-size:11px;color:#7e879e;margin-top:2px;">Akses lebih cepat, bisa offline</div>
+  </div>
+  <button onclick="installPWA()" style="background:#5b8ef0;color:#fff;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;">Install</button>
+  <button onclick="dismissInstallBanner()" style="background:transparent;border:none;color:#7e879e;font-size:18px;cursor:pointer;padding:4px;">✕</button>
+</div>
+
+</body>
+</html>

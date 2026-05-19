@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0c0e13">
+<title>Lacak Pengiriman — OPS Palembang</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Epilogue:wght@400;500&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Epilogue', sans-serif;
+  background: #0c0e13;
+  color: #e4e8f4;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.header {
+  padding: 16px 20px 12px;
+  background: #13161e;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 10;
+}
+.header-logo { font-size: 24px; }
+.header-info h1 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+.header-info p  { font-size: 12px; color: #7e879e; margin-top: 2px; }
+.live-badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(52,212,158,0.12);
+  border: 1px solid rgba(52,212,158,0.3);
+  border-radius: 99px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #34d49e;
+}
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #34d49e;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── Map ── */
+#map {
+  flex: 1;
+  min-height: 55vh;
+  background: #1a1e2a;
+  position: relative;
+}
+#map iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  min-height: 55vh;
+}
+
+/* ── Info Panel ── */
+.info-panel {
+  background: #13161e;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 20px;
+}
+.info-order {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #454d63;
+  margin-bottom: 4px;
+}
+.info-driver {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+.info-rows { display: flex; flex-direction: column; gap: 10px; }
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1a1e2a;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.info-row-icon { font-size: 20px; flex-shrink: 0; }
+.info-row-label { font-size: 11px; color: #7e879e; margin-bottom: 2px; }
+.info-row-val { font-size: 13px; font-weight: 500; }
+.info-row-val.green { color: #34d49e; }
+.info-row-val.orange { color: #fbbf24; }
+
+/* ── Status screens ── */
+.status-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+}
+.status-icon { font-size: 64px; margin-bottom: 20px; }
+.status-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+.status-sub { font-size: 14px; color: #7e879e; line-height: 1.6; max-width: 300px; }
+.status-sub.green { color: #34d49e; }
+
+/* ── Last updated ── */
+.last-update {
+  font-size: 11px;
+  color: #454d63;
+  text-align: center;
+  padding: 10px;
+  background: #0c0e13;
+}
+
+/* ── Accuracy pill ── */
+.acc-pill {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(12,14,19,0.85);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 99px;
+  padding: 5px 14px;
+  font-size: 11px;
+  color: #7e879e;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  z-index: 5;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">🚚</div>
+  <div class="header-info">
+    <h1>Lacak Pengiriman</h1>
+    <p id="headerSub">OPS LOG Palembang 2026</p>
+  </div>
+  <div class="live-badge" id="liveBadge" style="display:none;">
+    <div class="live-dot"></div>
+    LIVE
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="status-screen" id="screenLoading">
+  <div class="status-icon" style="animation:spin 1s linear infinite;display:inline-block;">⏳</div>
+  <div class="status-title">Memuat...</div>
+  <div class="status-sub">Mencari posisi driver</div>
+</div>
+
+<!-- NOT FOUND -->
+<div class="status-screen" id="screenNotFound" style="display:none;">
+  <div class="status-icon">❓</div>
+  <div class="status-title">Order tidak ditemukan</div>
+  <div class="status-sub">Link tracking tidak valid atau sudah tidak aktif. Hubungi pengirim untuk informasi lebih lanjut.</div>
+</div>
+
+<!-- DELIVERED -->
+<div class="status-screen" id="screenDelivered" style="display:none;">
+  <div class="status-icon">✅</div>
+  <div class="status-title" style="color:#34d49e;">Paket sudah diterima!</div>
+  <div class="status-sub green" id="deliveredMsg">Pengiriman telah berhasil diselesaikan. Terima kasih telah mempercayakan pengiriman Anda kepada kami.</div>
+</div>
+
+<!-- MAP (aktif saat tracking) -->
+<div id="screenTracking" style="display:none;flex:1;display:none;flex-direction:column;">
+  <div id="map" style="flex:1;min-height:55vh;position:relative;">
+    <iframe id="mapFrame" src="" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <div class="acc-pill" id="accPill" style="display:none;">📍 Akurasi: <span id="accVal">—</span> m</div>
+  </div>
+
+  <div class="info-panel">
+    <div class="info-order" id="infoOrderLabel">No. Order</div>
+    <div class="info-driver" id="infoDriver">Driver sedang dalam perjalanan</div>
+    <div class="info-rows">
+      <div class="info-row">
+        <div class="info-row-icon">🟢</div>
+        <div>
+          <div class="info-row-label">Status</div>
+          <div class="info-row-val green" id="infoStatus">Driver sedang OTW</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-row-icon">🕐</div>
+        <div>
+          <div class="info-row-label">Update terakhir</div>
+          <div class="info-row-val" id="infoLastUpdate">—</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-row-icon">📍</div>
+        <div>
+          <div class="info-row-label">Koordinat driver</div>
+          <div class="info-row-val orange" id="infoCoords">Memuat...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="last-update" id="lastUpdateBar">Memperbarui posisi setiap 10 detik</div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script>
+// ══════════════════════════════════════════════════════
+// !! SALIN FIREBASE CONFIG YANG SAMA DARI index.html !!
+// ══════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDPlpkG_nK6PbjzMcmNcoXzJsZktlJ5itE",
+  authDomain:        "ops-palembang.firebaseapp.com",
+  databaseURL:       "https://ops-palembang-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "ops-palembang",
+  storageBucket:     "ps-palembang.firebasestorage.app",
+  messagingSenderId: "816088947240",
+  appId:             "1:816088947240:web:2fff9a0d15f6afe541331d"
+};
+
+// ── Init ──
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
+// Ambil order key dari URL ?order=XXXX
+const params   = new URLSearchParams(window.location.search);
+const orderKey = params.get('order');
+
+let mapLat = null, mapLng = null;
+let mapInitialized = false;
+
+function showScreen(id) {
+  ['screenLoading','screenNotFound','screenDelivered','screenTracking'].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.style.display = s === id ? (s === 'screenTracking' ? 'flex' : 'flex') : 'none';
+  });
+  if (id === 'screenTracking') {
+    document.getElementById('screenTracking').style.flexDirection = 'column';
+  }
+}
+
+function updateMap(lat, lng) {
+  if (!lat || !lng) return;
+  const frame = document.getElementById('mapFrame');
+  // Update map setiap koordinat berubah signifikan (>10m)
+  const newSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+  if (frame.src !== newSrc) frame.src = newSrc;
+
+  document.getElementById('infoCoords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
+function formatTime(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+// ── Listen ke Firebase ──
+if (!orderKey) {
+  showScreen('screenNotFound');
+} else {
+  document.getElementById('infoOrderLabel').textContent = 'No. Order: ' + orderKey;
+  document.getElementById('headerSub').textContent = 'Order #' + orderKey;
+
+  const ref = db.ref(`tracking/${orderKey}`);
+
+  ref.on('value', (snap) => {
+    const data = snap.val();
+
+    if (!data) {
+      // Data tidak ada — order belum mulai atau sudah expired
+      showScreen('screenNotFound');
+      return;
+    }
+
+    if (data.status === 'delivered') {
+      // Order sudah diterima
+      showScreen('screenDelivered');
+      document.getElementById('liveBadge').style.display = 'none';
+      document.getElementById('deliveredMsg').textContent =
+        `Pengiriman oleh ${data.driver||'driver'} telah berhasil diselesaikan. Terima kasih! 🙏`;
+      ref.off(); // stop listening
+      return;
+    }
+
+    // Active tracking
+    showScreen('screenTracking');
+    document.getElementById('liveBadge').style.display = 'flex';
+    document.getElementById('infoDriver').textContent  = `Driver: ${data.driver || '—'} sedang dalam perjalanan`;
+    document.getElementById('infoLastUpdate').textContent = formatTime(data.ts);
+    document.getElementById('lastUpdateBar').textContent  = `Diperbarui: ${formatTime(data.ts)} · Setiap 10 detik`;
+
+    if (data.acc) {
+      document.getElementById('accPill').style.display = 'block';
+      document.getElementById('accVal').textContent    = Math.round(data.acc);
+    }
+
+    updateMap(data.lat, data.lng);
+  });
+}
+</script>
+</body>
+</html>
