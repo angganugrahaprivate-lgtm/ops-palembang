@@ -1110,23 +1110,25 @@ async function fetchDriverOrders(cacheKey, tanggal) {
   try {
     let orders = [];
 
-    if (driverViewDate === 'today') {
-      // Pakai Active Orders sheet (cepat!) untuk hari ini
-      const res = await gasCall({ action: 'getActiveOrders', ekspedisi: currentDriver.ekspedisi });
-      orders = res.orders || [];
-      if (currentDriver.ekspedisiAlt) {
-        const res2 = await gasCall({ action: 'getActiveOrders', ekspedisi: currentDriver.ekspedisiAlt });
-        orders = orders.concat(res2.orders || []);
-      }
-    } else {
-      // Besok — pakai getOrders biasa
-      const res = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisi, tanggal });
-      orders = res.orders || [];
-      if (currentDriver.ekspedisiAlt) {
-        const res2 = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisiAlt, tanggal });
-        orders = orders.concat(res2.orders || []);
-      }
-    }
+if (driverViewDate === 'today') {
+  // TES SEMENTARA: Gunakan getOrders biasa untuk hari ini, bukan getActiveOrders
+  // Pastikan variabel 'tanggal' di bawah ini adalah tanggal hari ini (format YYYY-MM-DD atau sesuai sheet)
+  const res = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisi, tanggal: tanggal });
+  orders = res.orders || [];
+  
+  if (currentDriver.ekspedisiAlt) {
+    const res2 = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisiAlt, tanggal: tanggal });
+    orders = orders.concat(res2.orders || []);
+  }
+} else {
+  // Besok
+  const res = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisi, tanggal });
+  orders = res.orders || [];
+  if (currentDriver.ekspedisiAlt) {
+    const res2 = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisiAlt, tanggal });
+    orders = orders.concat(res2.orders || []);
+  }
+}
 
     allOrders = orders;
     saveCache(cacheKey, allOrders);
