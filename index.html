@@ -719,7 +719,7 @@ select:focus,input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 // ═══════════════════════════════════════════════════════
 // !! GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT KAMU !!
 // ═══════════════════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxPAW-ZQ-3MBdrBdxD-aE73Mc45gP_16Ij0P2uSmZ3o3HKvT50ZBA89TjwNDnAYYBC6gg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN4wQgprC0NA2R_GX87K6IE_8zCRYOObGu9W2rtAAje9XbcEzHl0VKRlJWiZ-UZSNlVA/exec';
 
 // ══════════════════════════════════════════════════════
 // !! FIREBASE CONFIG — isi dengan config Firebase kamu !!
@@ -1110,25 +1110,23 @@ async function fetchDriverOrders(cacheKey, tanggal) {
   try {
     let orders = [];
 
-if (driverViewDate === 'today') {
-  // TES SEMENTARA: Gunakan getOrders biasa untuk hari ini, bukan getActiveOrders
-  // Pastikan variabel 'tanggal' di bawah ini adalah tanggal hari ini (format YYYY-MM-DD atau sesuai sheet)
-  const res = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisi, tanggal: tanggal });
-  orders = res.orders || [];
-  
-  if (currentDriver.ekspedisiAlt) {
-    const res2 = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisiAlt, tanggal: tanggal });
-    orders = orders.concat(res2.orders || []);
-  }
-} else {
-  // Besok
-  const res = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisi, tanggal });
-  orders = res.orders || [];
-  if (currentDriver.ekspedisiAlt) {
-    const res2 = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisiAlt, tanggal });
-    orders = orders.concat(res2.orders || []);
-  }
-}
+    if (driverViewDate === 'today') {
+      // Pakai Active Orders sheet (cepat!) untuk hari ini
+      const res = await gasCall({ action: 'getActiveOrders', ekspedisi: currentDriver.ekspedisi });
+      orders = res.orders || [];
+      if (currentDriver.ekspedisiAlt) {
+        const res2 = await gasCall({ action: 'getActiveOrders', ekspedisi: currentDriver.ekspedisiAlt });
+        orders = orders.concat(res2.orders || []);
+      }
+    } else {
+      // Besok — pakai getOrders biasa
+      const res = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisi, tanggal });
+      orders = res.orders || [];
+      if (currentDriver.ekspedisiAlt) {
+        const res2 = await gasCall({ action: 'getOrders', ekspedisi: currentDriver.ekspedisiAlt, tanggal });
+        orders = orders.concat(res2.orders || []);
+      }
+    }
 
     allOrders = orders;
     saveCache(cacheKey, allOrders);
