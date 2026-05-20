@@ -719,7 +719,7 @@ select:focus,input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 // ═══════════════════════════════════════════════════════
 // !! GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT KAMU !!
 // ═══════════════════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN4wQgprC0NA2R_GX87K6IE_8zCRYOObGu9W2rtAAje9XbcEzHl0VKRlJWiZ-UZSNlVA/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxPAW-ZQ-3MBdrBdxD-aE73Mc45gP_16Ij0P2uSmZ3o3HKvT50ZBA89TjwNDnAYYBC6gg/exec';
 
 // ══════════════════════════════════════════════════════
 // !! FIREBASE CONFIG — isi dengan config Firebase kamu !!
@@ -820,11 +820,23 @@ function stopGPSWatch() {
 }
 
 // Mulai kirim GPS ke Firebase untuk order tertentu
-function startTrackingOrder(orderKey) {
+function startTrackingOrder(orderKey, orderData) {
   if (!gpsFirebaseDB) return;
   gpsActiveOrderId = orderKey;
 
-  // Kirim langsung sekarang
+  // Simpan info customer ke Firebase (untuk halaman tracking)
+  if (orderData) {
+    const alamat = [orderData.alamat, orderData.kecamatan, orderData.kota].filter(Boolean).join(', ');
+    gpsFirebaseDB.ref(`tracking/${orderKey}/info`).set({
+      namaCustomer: orderData.namaCustomer || '—',
+      alamat:       alamat || orderData.kota || '—',
+      noOrder:      orderData.noOrder || orderData.shippingNumber || '—',
+      ekspedisi:    orderData.ekspedisi || '—',
+      driver:       currentDriver?.name || '—'
+    }).catch(e => console.warn('[GPS] Info push error:', e));
+  }
+
+  // Kirim koordinat langsung sekarang
   pushGPSToFirebase(orderKey);
 
   // Lanjut kirim setiap 10 detik
@@ -835,14 +847,12 @@ function startTrackingOrder(orderKey) {
 
 function pushGPSToFirebase(orderKey) {
   if (!gpsCurrentPos || !gpsFirebaseDB || !orderKey) return;
-  const ref = gpsFirebaseDB.ref(`tracking/${orderKey}`);
-  ref.set({
-    lat:       gpsCurrentPos.lat,
-    lng:       gpsCurrentPos.lng,
-    acc:       gpsCurrentPos.acc,
-    ts:        Date.now(),
-    driver:    currentDriver?.name || '—',
-    status:    'active'
+  gpsFirebaseDB.ref(`tracking/${orderKey}/gps`).set({
+    lat:    gpsCurrentPos.lat,
+    lng:    gpsCurrentPos.lng,
+    acc:    gpsCurrentPos.acc,
+    ts:     Date.now(),
+    status: 'active'
   }).catch(e => console.warn('[GPS] Push error:', e));
 }
 
@@ -851,8 +861,7 @@ function stopTrackingOrder(orderKey) {
   if (gpsUpdateInterval) { clearInterval(gpsUpdateInterval); gpsUpdateInterval = null; }
   const key = orderKey || gpsActiveOrderId;
   if (key && gpsFirebaseDB) {
-    // Set status delivered — halaman customer akan tampil pesan "sudah diterima"
-    gpsFirebaseDB.ref(`tracking/${key}`).update({ status: 'delivered', ts: Date.now() })
+    gpsFirebaseDB.ref(`tracking/${key}/gps`).update({ status: 'delivered', ts: Date.now() })
       .then(() => {
         // Hapus data GPS setelah 30 menit (privasi driver)
         setTimeout(() => gpsFirebaseDB.ref(`tracking/${key}`).remove(), 30 * 60 * 1000);
@@ -1309,7 +1318,7 @@ function pilihOrder(idx) {
 
   // Mulai GPS tracking untuk order ini (otomatis, silent)
   const orderKey = (o.noOrder || o.shippingNumber || '').replace(/[^a-zA-Z0-9]/g, '');
-  if (orderKey && currentDriver?.role === 'driver') startTrackingOrder(orderKey);
+  if (orderKey && currentDriver?.role === 'driver') startTrackingOrder(orderKey, o);
 
   openKonfirm('screenRecap');
 }
@@ -1389,8 +1398,9 @@ function closeConfirmPopup() {
 }
 
 async function submitKonfirmasi(tipe) {
-  const o = selectedOrder;
-  if (!o || (!o.rowIndex && o.rowIndex !== -1)) { showToast('Data order tidak valid.'); return; }
+  // Snapshot selectedOrder saat submit — hindari race condition
+  const o = selectedOrder ? { ...selectedOrder } : null;
+  if (!o || !o.shippingNumber) { showToast('Data order tidak valid. Coba pilih order lagi.'); return; }
 
   if (tipe === 'berhasil') {
     const tgl     = document.getElementById('inputTglTiba').value;

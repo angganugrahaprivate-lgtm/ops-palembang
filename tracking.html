@@ -4,230 +4,136 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0c0e13">
-<title>Lacak Pengiriman — OPS Palembang</title>
+<title>Lacak Pengiriman — Dekoruma</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Epilogue:wght@400;500&display=swap" rel="stylesheet">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Epilogue', sans-serif;
-  background: #0c0e13;
-  color: #e4e8f4;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:#0c0e13;color:#e4e8f4;font-family:'Epilogue',sans-serif;}
+body{display:flex;flex-direction:column;}
 
-/* ── Header ── */
-.header {
-  padding: 16px 20px 12px;
-  background: #13161e;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-  z-index: 10;
-}
-.header-logo { font-size: 24px; }
-.header-info h1 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
-.header-info p  { font-size: 12px; color: #7e879e; margin-top: 2px; }
-.live-badge {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(52,212,158,0.12);
-  border: 1px solid rgba(52,212,158,0.3);
-  border-radius: 99px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #34d49e;
-}
-.live-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: #34d49e;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.header{padding:14px 16px;background:#13161e;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px;z-index:1000;position:relative;}
+.header-logo{font-size:22px;}
+.header-info h1{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.header-info p{font-size:11px;color:#7e879e;margin-top:1px;}
+.live-badge{margin-left:auto;display:flex;align-items:center;gap:5px;background:rgba(52,212,158,0.12);border:1px solid rgba(52,212,158,0.3);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:600;color:#34d49e;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#34d49e;animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 
-/* ── Map ── */
-#map {
-  flex: 1;
-  min-height: 55vh;
-  background: #1a1e2a;
-  position: relative;
-}
-#map iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  min-height: 55vh;
-}
+#map{flex:1;min-height:50vh;z-index:1;}
 
-/* ── Info Panel ── */
-.info-panel {
-  background: #13161e;
-  border-top: 1px solid rgba(255,255,255,0.07);
-  padding: 20px;
-}
-.info-order {
-  font-family: 'Syne', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: #454d63;
-  margin-bottom: 4px;
-}
-.info-driver {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 14px;
-}
-.info-rows { display: flex; flex-direction: column; gap: 10px; }
-.info-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #1a1e2a;
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 10px;
-  padding: 12px 14px;
-}
-.info-row-icon { font-size: 20px; flex-shrink: 0; }
-.info-row-label { font-size: 11px; color: #7e879e; margin-bottom: 2px; }
-.info-row-val { font-size: 13px; font-weight: 500; }
-.info-row-val.green { color: #34d49e; }
-.info-row-val.orange { color: #fbbf24; }
+.info-panel{background:#13161e;border-top:1px solid rgba(255,255,255,0.07);padding:16px;}
+.info-customer{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px;}
+.info-order{font-size:11px;color:#7e879e;margin-bottom:12px;letter-spacing:.04em;text-transform:uppercase;}
+.info-rows{display:flex;flex-direction:column;gap:8px;}
+.info-row{display:flex;align-items:center;gap:10px;background:#1a1e2a;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px 12px;}
+.info-row-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center;}
+.info-row-text .lbl{font-size:10px;color:#7e879e;margin-bottom:1px;}
+.info-row-text .val{font-size:13px;font-weight:500;}
+.val.green{color:#34d49e;}
+.val.orange{color:#fbbf24;}
+.val.blue{color:#5b8ef0;}
 
-/* ── Status screens ── */
-.status-screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  text-align: center;
-}
-.status-icon { font-size: 64px; margin-bottom: 20px; }
-.status-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 10px; }
-.status-sub { font-size: 14px; color: #7e879e; line-height: 1.6; max-width: 300px; }
-.status-sub.green { color: #34d49e; }
+.footer-bar{font-size:11px;color:#454d63;text-align:center;padding:8px;background:#0c0e13;}
 
-/* ── Last updated ── */
-.last-update {
-  font-size: 11px;
-  color: #454d63;
-  text-align: center;
-  padding: 10px;
-  background: #0c0e13;
-}
+/* Status screens */
+.status-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.status-icon{font-size:60px;margin-bottom:16px;}
+.status-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;}
+.status-sub{font-size:13px;color:#7e879e;line-height:1.6;max-width:280px;}
 
-/* ── Accuracy pill ── */
-.acc-pill {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(12,14,19,0.85);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 99px;
-  padding: 5px 14px;
-  font-size: 11px;
-  color: #7e879e;
-  white-space: nowrap;
-  backdrop-filter: blur(4px);
-  z-index: 5;
-}
+/* Leaflet custom marker */
+.driver-marker-wrap{position:relative;}
+.driver-pulse{width:40px;height:40px;border-radius:50%;background:rgba(91,142,240,0.3);border:2px solid #5b8ef0;display:flex;align-items:center;justify-content:center;font-size:20px;animation:markerPulse 2s ease-in-out infinite;}
+@keyframes markerPulse{0%,100%{box-shadow:0 0 0 0 rgba(91,142,240,0.4)}50%{box-shadow:0 0 0 12px rgba(91,142,240,0)}}
+.dest-marker{width:36px;height:36px;border-radius:50%;background:rgba(52,212,158,0.2);border:2px solid #34d49e;display:flex;align-items:center;justify-content:center;font-size:18px;}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <div class="header-logo">🚚</div>
   <div class="header-info">
     <h1>Lacak Pengiriman</h1>
-    <p id="headerSub">OPS LOG Palembang 2026</p>
+    <p id="headerOrderNo">Dekoruma</p>
   </div>
   <div class="live-badge" id="liveBadge" style="display:none;">
-    <div class="live-dot"></div>
-    LIVE
+    <div class="live-dot"></div>LIVE
   </div>
 </div>
 
-<!-- LOADING -->
+<!-- Status: loading -->
 <div class="status-screen" id="screenLoading">
-  <div class="status-icon" style="animation:spin 1s linear infinite;display:inline-block;">⏳</div>
-  <div class="status-title">Memuat...</div>
-  <div class="status-sub">Mencari posisi driver</div>
+  <div class="status-icon">🔍</div>
+  <div class="status-title">Mencari driver...</div>
+  <div class="status-sub">Memuat posisi driver secara realtime</div>
 </div>
 
-<!-- NOT FOUND -->
+<!-- Status: not found -->
 <div class="status-screen" id="screenNotFound" style="display:none;">
   <div class="status-icon">❓</div>
-  <div class="status-title">Order tidak ditemukan</div>
-  <div class="status-sub">Link tracking tidak valid atau sudah tidak aktif. Hubungi pengirim untuk informasi lebih lanjut.</div>
+  <div class="status-title">Tidak ditemukan</div>
+  <div class="status-sub">Link tracking tidak valid atau sudah tidak aktif. Hubungi Dekoruma untuk informasi lebih lanjut.</div>
 </div>
 
-<!-- DELIVERED -->
+<!-- Status: delivered -->
 <div class="status-screen" id="screenDelivered" style="display:none;">
   <div class="status-icon">✅</div>
-  <div class="status-title" style="color:#34d49e;">Paket sudah diterima!</div>
-  <div class="status-sub green" id="deliveredMsg">Pengiriman telah berhasil diselesaikan. Terima kasih telah mempercayakan pengiriman Anda kepada kami.</div>
+  <div class="status-title" style="color:#34d49e;">Pesanan sudah diterima!</div>
+  <div class="status-sub" style="color:#34d49e;" id="deliveredMsg">Pengiriman telah berhasil diselesaikan. Terima kasih telah berbelanja di Dekoruma! 🏠✨</div>
 </div>
 
-<!-- MAP (aktif saat tracking) -->
-<div id="screenTracking" style="display:none;flex:1;display:none;flex-direction:column;">
-  <div id="map" style="flex:1;min-height:55vh;position:relative;">
-    <iframe id="mapFrame" src="" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-    <div class="acc-pill" id="accPill" style="display:none;">📍 Akurasi: <span id="accVal">—</span> m</div>
-  </div>
+<!-- Map -->
+<div id="map" style="display:none;"></div>
 
-  <div class="info-panel">
-    <div class="info-order" id="infoOrderLabel">No. Order</div>
-    <div class="info-driver" id="infoDriver">Driver sedang dalam perjalanan</div>
-    <div class="info-rows">
-      <div class="info-row">
-        <div class="info-row-icon">🟢</div>
-        <div>
-          <div class="info-row-label">Status</div>
-          <div class="info-row-val green" id="infoStatus">Driver sedang OTW</div>
-        </div>
+<!-- Info panel -->
+<div class="info-panel" id="infoPanel" style="display:none;">
+  <div class="info-customer" id="infoCustomer">—</div>
+  <div class="info-order" id="infoOrderNo">NO. ORDER: —</div>
+  <div class="info-rows">
+    <div class="info-row">
+      <div class="info-row-icon">🟢</div>
+      <div class="info-row-text">
+        <div class="lbl">Status</div>
+        <div class="val green" id="infoStatus">Driver sedang OTW</div>
       </div>
-      <div class="info-row">
-        <div class="info-row-icon">🕐</div>
-        <div>
-          <div class="info-row-label">Update terakhir</div>
-          <div class="info-row-val" id="infoLastUpdate">—</div>
-        </div>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon">📍</div>
+      <div class="info-row-text">
+        <div class="lbl">Tujuan pengiriman</div>
+        <div class="val blue" id="infoAlamat">—</div>
       </div>
-      <div class="info-row">
-        <div class="info-row-icon">📍</div>
-        <div>
-          <div class="info-row-label">Koordinat driver</div>
-          <div class="info-row-val orange" id="infoCoords">Memuat...</div>
-        </div>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon">🎯</div>
+      <div class="info-row-text">
+        <div class="lbl">Akurasi GPS</div>
+        <div class="val orange" id="infoAcc">—</div>
+      </div>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon">🕐</div>
+      <div class="info-row-text">
+        <div class="lbl">Update terakhir</div>
+        <div class="val" id="infoLastUpdate">—</div>
       </div>
     </div>
   </div>
-  <div class="last-update" id="lastUpdateBar">Memperbarui posisi setiap 10 detik</div>
 </div>
 
-<style>
-@keyframes spin { to { transform: rotate(360deg); } }
-</style>
+<div class="footer-bar" id="footerBar" style="display:none;">Posisi diperbarui setiap 10 detik · Dekoruma Palembang</div>
 
 <script>
-// ══════════════════════════════════════════════════════
-// !! SALIN FIREBASE CONFIG YANG SAMA DARI index.html !!
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════
+// FIREBASE CONFIG — salin dari index.html
+// ════════════════════════════════════════════
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyDPlpkG_nK6PbjzMcmNcoXzJsZktlJ5itE",
   authDomain:        "ops-palembang.firebaseapp.com",
@@ -238,84 +144,187 @@ const FIREBASE_CONFIG = {
   appId:             "1:816088947240:web:2fff9a0d15f6afe541331d"
 };
 
-// ── Init ──
+
+// ── Init Firebase ──
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
 
-// Ambil order key dari URL ?order=XXXX
+// ── Ambil order key dari URL ──
 const params   = new URLSearchParams(window.location.search);
 const orderKey = params.get('order');
 
-let mapLat = null, mapLng = null;
-let mapInitialized = false;
+// ── Leaflet map & markers ──
+let map          = null;
+let driverMarker = null;
+let destMarker   = null;
+let routeLine    = null;
+let destLatLng   = null;
+let firstLoad    = true;
 
-function showScreen(id) {
-  ['screenLoading','screenNotFound','screenDelivered','screenTracking'].forEach(s => {
-    const el = document.getElementById(s);
-    if (el) el.style.display = s === id ? (s === 'screenTracking' ? 'flex' : 'flex') : 'none';
+function showOnly(id) {
+  ['screenLoading','screenNotFound','screenDelivered'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'flex' : 'none';
   });
-  if (id === 'screenTracking') {
-    document.getElementById('screenTracking').style.flexDirection = 'column';
-  }
+  const isMap = id === 'map';
+  document.getElementById('map').style.display       = isMap ? 'block' : 'none';
+  document.getElementById('infoPanel').style.display = isMap ? 'block' : 'none';
+  document.getElementById('footerBar').style.display = isMap ? 'block' : 'none';
+  document.getElementById('liveBadge').style.display = isMap ? 'flex'  : 'none';
 }
 
-function updateMap(lat, lng) {
-  if (!lat || !lng) return;
-  const frame = document.getElementById('mapFrame');
-  // Update map setiap koordinat berubah signifikan (>10m)
-  const newSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
-  if (frame.src !== newSrc) frame.src = newSrc;
+function initMap(lat, lng) {
+  if (map) return;
+  map = L.map('map', { zoomControl: true, attributionControl: false }).setView([lat, lng], 15);
 
-  document.getElementById('infoCoords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  // OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  // Driver marker (biru, animasi pulse)
+  const driverIcon = L.divIcon({
+    className: '',
+    html: '<div class="driver-pulse">🚚</div>',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+  });
+  driverMarker = L.marker([lat, lng], { icon: driverIcon }).addTo(map);
+  driverMarker.bindPopup('<b>Posisi Driver</b>').openPopup();
+}
+
+function updateDriverMarker(lat, lng) {
+  if (!map) { initMap(lat, lng); return; }
+
+  const newLatLng = L.latLng(lat, lng);
+  driverMarker.setLatLng(newLatLng);
+
+  // Smooth pan ke posisi driver kalau pertama kali
+  if (firstLoad) {
+    map.setView(newLatLng, 15);
+    firstLoad = false;
+  }
+
+  // Update garis rute driver → tujuan
+  drawRoute(newLatLng);
+}
+
+function setDestination(alamat) {
+  if (!alamat || destLatLng) return;
+
+  // Geocode alamat via Nominatim (OpenStreetMap gratis)
+  const query = encodeURIComponent(alamat + ', Palembang, Indonesia');
+  fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data || !data.length) return;
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+      destLatLng = L.latLng(lat, lng);
+
+      // Destination marker (hijau)
+      const destIcon = L.divIcon({
+        className: '',
+        html: '<div class="dest-marker">🏠</div>',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+      if (destMarker) map.removeLayer(destMarker);
+      destMarker = L.marker(destLatLng, { icon: destIcon }).addTo(map);
+      destMarker.bindPopup('<b>Tujuan Pengiriman</b><br>' + alamat);
+
+      // Fit map to show both markers
+      if (driverMarker) {
+        const bounds = L.latLngBounds([driverMarker.getLatLng(), destLatLng]);
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
+
+      // Draw initial route
+      if (driverMarker) drawRoute(driverMarker.getLatLng());
+    })
+    .catch(e => console.warn('[MAP] Geocode error:', e));
+}
+
+function drawRoute(driverLatLng) {
+  if (!destLatLng || !map) return;
+
+  // Gunakan OSRM untuk routing (gratis, tidak perlu API key)
+  const url = `https://router.project-osrm.org/route/v1/driving/${driverLatLng.lng},${driverLatLng.lat};${destLatLng.lng},${destLatLng.lat}?overview=full&geometries=geojson`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.routes || !data.routes.length) return;
+      const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+
+      if (routeLine) map.removeLayer(routeLine);
+      routeLine = L.polyline(coords, {
+        color:     '#5b8ef0',
+        weight:    4,
+        opacity:   0.8,
+        dashArray: '8, 4'
+      }).addTo(map);
+    })
+    .catch(e => {
+      // Fallback: garis lurus jika OSRM gagal
+      if (routeLine) map.removeLayer(routeLine);
+      routeLine = L.polyline([driverLatLng, destLatLng], {
+        color: '#5b8ef0', weight: 3, opacity: 0.6, dashArray: '6,4'
+      }).addTo(map);
+    });
 }
 
 function formatTime(ts) {
   if (!ts) return '—';
-  const d = new Date(ts);
-  return d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  return new Date(ts).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 }
 
-// ── Listen ke Firebase ──
+// ── Listen Firebase ──
 if (!orderKey) {
-  showScreen('screenNotFound');
+  showOnly('screenNotFound');
 } else {
-  document.getElementById('infoOrderLabel').textContent = 'No. Order: ' + orderKey;
-  document.getElementById('headerSub').textContent = 'Order #' + orderKey;
+  document.getElementById('headerOrderNo').textContent = 'Order #' + orderKey;
 
   const ref = db.ref(`tracking/${orderKey}`);
 
-  ref.on('value', (snap) => {
+  ref.on('value', snap => {
     const data = snap.val();
+    if (!data) { showOnly('screenNotFound'); return; }
 
-    if (!data) {
-      // Data tidak ada — order belum mulai atau sudah expired
-      showScreen('screenNotFound');
-      return;
-    }
+    const gps  = data.gps  || {};
+    const info = data.info || {};
 
-    if (data.status === 'delivered') {
-      // Order sudah diterima
-      showScreen('screenDelivered');
-      document.getElementById('liveBadge').style.display = 'none';
+    // Delivered
+    if (gps.status === 'delivered') {
+      showOnly('screenDelivered');
       document.getElementById('deliveredMsg').textContent =
-        `Pengiriman oleh ${data.driver||'driver'} telah berhasil diselesaikan. Terima kasih! 🙏`;
-      ref.off(); // stop listening
+        `Pesanan untuk ${info.namaCustomer||'Anda'} telah berhasil diterima. Terima kasih telah berbelanja di Dekoruma! 🏠✨`;
+      ref.off();
       return;
     }
 
     // Active tracking
-    showScreen('screenTracking');
-    document.getElementById('liveBadge').style.display = 'flex';
-    document.getElementById('infoDriver').textContent  = `Driver: ${data.driver || '—'} sedang dalam perjalanan`;
-    document.getElementById('infoLastUpdate').textContent = formatTime(data.ts);
-    document.getElementById('lastUpdateBar').textContent  = `Diperbarui: ${formatTime(data.ts)} · Setiap 10 detik`;
+    showOnly('map');
 
-    if (data.acc) {
-      document.getElementById('accPill').style.display = 'block';
-      document.getElementById('accVal').textContent    = Math.round(data.acc);
+    // Update info panel
+    document.getElementById('infoCustomer').textContent  = info.namaCustomer || 'Driver sedang dalam perjalanan';
+    document.getElementById('infoOrderNo').textContent   = 'NO. ORDER: ' + (info.noOrder || orderKey);
+    document.getElementById('infoAlamat').textContent    = info.alamat || '—';
+    document.getElementById('infoLastUpdate').textContent = formatTime(gps.ts);
+    document.getElementById('infoAcc').textContent       = gps.acc ? Math.round(gps.acc) + ' meter' : '—';
+    document.getElementById('infoStatus').textContent    = `${info.driver||'Driver'} sedang OTW 🚚`;
+
+    // Update map
+    if (gps.lat && gps.lng) {
+      updateDriverMarker(gps.lat, gps.lng);
     }
 
-    updateMap(data.lat, data.lng);
+    // Set destination (hanya sekali)
+    if (info.alamat && !destLatLng && map) {
+      setDestination(info.alamat);
+    } else if (info.alamat && !destLatLng && gps.lat) {
+      // Map belum init tapi sudah ada alamat — init dulu lalu geocode
+      setTimeout(() => setDestination(info.alamat), 500);
+    }
   });
 }
 </script>
