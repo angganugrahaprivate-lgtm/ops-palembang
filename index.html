@@ -719,7 +719,7 @@ select:focus,input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 // ═══════════════════════════════════════════════════════
 // !! GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT KAMU !!
 // ═══════════════════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxPAW-ZQ-3MBdrBdxD-aE73Mc45gP_16Ij0P2uSmZ3o3HKvT50ZBA89TjwNDnAYYBC6gg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN4wQgprC0NA2R_GX87K6IE_8zCRYOObGu9W2rtAAje9XbcEzHl0VKRlJWiZ-UZSNlVA/exec';
 
 // ══════════════════════════════════════════════════════
 // !! FIREBASE CONFIG — isi dengan config Firebase kamu !!
@@ -736,7 +736,7 @@ const FIREBASE_CONFIG = {
 };
 
 // URL halaman tracking customer (setelah deploy ke GitHub Pages)
-const TRACKING_BASE_URL = 'https://angganugrahaprivate-lgtm.github.io/ops-palembang/tracking.html';
+const TRACKING_BASE_URL = 'https://GITHUB_USERNAME.github.io/ops-palembang/tracking.html';
 
 // ══════════════════════════════════════════════════════
 // CONFIG — Driver & PIN
@@ -1082,8 +1082,11 @@ function toggleDriverDate(val) {
   document.getElementById('dtTomorrow').classList.toggle('active', val === 'tomorrow');
   const tanggal = val === 'today' ? todayISO() : shiftDate(todayISO(), 1);
   document.getElementById('recapDateLabel').textContent = val === 'today' ? 'Hari ini' : 'Besok — ' + isoToDisplay(tanggal);
-  allOrders = [];
-  orderSort = [];
+  allOrders  = [];
+  orderSort  = [];
+  // Clear cache untuk tanggal ini agar selalu fetch fresh saat toggle
+  const cacheKey = CACHE_KEY_DRIVER + '_' + currentDriver.ekspedisi + '_' + tanggal;
+  try { localStorage.removeItem(cacheKey); } catch(e) {}
   loadRecap();
 }
 
