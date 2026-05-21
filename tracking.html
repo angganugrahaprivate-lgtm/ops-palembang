@@ -6,41 +6,39 @@
 <meta name="theme-color" content="#0c0e13">
 <title>Lacak Pengiriman — Dekoruma</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Epilogue:wght@400;500&display=swap" rel="stylesheet">
-<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;background:#0c0e13;color:#e4e8f4;font-family:'Epilogue',sans-serif;}
-body{display:flex;flex-direction:column;}
+html,body{height:100%;background:#0c0e13;color:#e4e8f4;font-family:'Epilogue',sans-serif;display:flex;flex-direction:column;}
 
-.header{padding:14px 16px;background:#13161e;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px;z-index:1000;position:relative;}
+.header{flex-shrink:0;padding:14px 16px;background:#13161e;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px;z-index:1000;}
 .header-logo{font-size:22px;}
 .header-info h1{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
 .header-info p{font-size:11px;color:#7e879e;margin-top:1px;}
 .live-badge{margin-left:auto;display:flex;align-items:center;gap:5px;background:rgba(52,212,158,0.12);border:1px solid rgba(52,212,158,0.3);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:600;color:#34d49e;}
-.live-dot{width:6px;height:6px;border-radius:50%;background:#34d49e;animation:pulse 1.5s ease-in-out infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#34d49e;animation:blink 1.5s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
 
-#map{flex:1;min-height:50vh;z-index:1;}
+/* Map container - fix height issue di mobile */
+#mapContainer{flex-shrink:0;height:50vh;min-height:260px;position:relative;background:#1a1e2a;}
+#map{width:100%;height:100%;}
 
-.info-panel{background:#13161e;border-top:1px solid rgba(255,255,255,0.07);padding:16px;}
-.info-customer{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px;}
-.info-order{font-size:11px;color:#7e879e;margin-bottom:12px;letter-spacing:.04em;text-transform:uppercase;}
+.info-panel{flex:1;overflow-y:auto;background:#13161e;border-top:1px solid rgba(255,255,255,0.07);padding:16px;}
+.info-customer{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:3px;}
+.info-order-no{font-size:11px;color:#7e879e;margin-bottom:14px;letter-spacing:.04em;text-transform:uppercase;}
 .info-rows{display:flex;flex-direction:column;gap:8px;}
-.info-row{display:flex;align-items:center;gap:10px;background:#1a1e2a;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px 12px;}
-.info-row-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center;}
-.info-row-text .lbl{font-size:10px;color:#7e879e;margin-bottom:1px;}
-.info-row-text .val{font-size:13px;font-weight:500;}
+.info-row{display:flex;align-items:flex-start;gap:10px;background:#1a1e2a;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px 12px;}
+.info-row-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center;margin-top:1px;}
+.lbl{font-size:10px;color:#7e879e;margin-bottom:2px;}
+.val{font-size:13px;font-weight:500;line-height:1.4;}
 .val.green{color:#34d49e;}
 .val.orange{color:#fbbf24;}
 .val.blue{color:#5b8ef0;}
 
-.footer-bar{font-size:11px;color:#454d63;text-align:center;padding:8px;background:#0c0e13;}
+.footer-bar{flex-shrink:0;font-size:11px;color:#454d63;text-align:center;padding:8px;background:#0c0e13;}
 
 /* Status screens */
 .status-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
@@ -48,11 +46,10 @@ body{display:flex;flex-direction:column;}
 .status-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;}
 .status-sub{font-size:13px;color:#7e879e;line-height:1.6;max-width:280px;}
 
-/* Leaflet custom marker */
-.driver-marker-wrap{position:relative;}
-.driver-pulse{width:40px;height:40px;border-radius:50%;background:rgba(91,142,240,0.3);border:2px solid #5b8ef0;display:flex;align-items:center;justify-content:center;font-size:20px;animation:markerPulse 2s ease-in-out infinite;}
-@keyframes markerPulse{0%,100%{box-shadow:0 0 0 0 rgba(91,142,240,0.4)}50%{box-shadow:0 0 0 12px rgba(91,142,240,0)}}
-.dest-marker{width:36px;height:36px;border-radius:50%;background:rgba(52,212,158,0.2);border:2px solid #34d49e;display:flex;align-items:center;justify-content:center;font-size:18px;}
+/* Leaflet custom markers */
+.driver-pulse{width:40px;height:40px;border-radius:50%;background:rgba(91,142,240,0.25);border:2px solid #5b8ef0;display:flex;align-items:center;justify-content:center;font-size:20px;animation:markerPulse 2s ease-in-out infinite;}
+@keyframes markerPulse{0%,100%{box-shadow:0 0 0 0 rgba(91,142,240,0.5)}70%{box-shadow:0 0 0 10px rgba(91,142,240,0)}}
+.dest-icon{width:36px;height:36px;border-radius:50%;background:rgba(52,212,158,0.2);border:2px solid #34d49e;display:flex;align-items:center;justify-content:center;font-size:18px;}
 </style>
 </head>
 <body>
@@ -61,66 +58,68 @@ body{display:flex;flex-direction:column;}
   <div class="header-logo">🚚</div>
   <div class="header-info">
     <h1>Lacak Pengiriman</h1>
-    <p id="headerOrderNo">Dekoruma</p>
+    <p id="headerSub">Dekoruma Palembang</p>
   </div>
   <div class="live-badge" id="liveBadge" style="display:none;">
     <div class="live-dot"></div>LIVE
   </div>
 </div>
 
-<!-- Status: loading -->
+<!-- Loading -->
 <div class="status-screen" id="screenLoading">
   <div class="status-icon">🔍</div>
   <div class="status-title">Mencari driver...</div>
   <div class="status-sub">Memuat posisi driver secara realtime</div>
 </div>
 
-<!-- Status: not found -->
+<!-- Not found -->
 <div class="status-screen" id="screenNotFound" style="display:none;">
   <div class="status-icon">❓</div>
   <div class="status-title">Tidak ditemukan</div>
   <div class="status-sub">Link tracking tidak valid atau sudah tidak aktif. Hubungi Dekoruma untuk informasi lebih lanjut.</div>
 </div>
 
-<!-- Status: delivered -->
+<!-- Delivered -->
 <div class="status-screen" id="screenDelivered" style="display:none;">
   <div class="status-icon">✅</div>
   <div class="status-title" style="color:#34d49e;">Pesanan sudah diterima!</div>
-  <div class="status-sub" style="color:#34d49e;" id="deliveredMsg">Pengiriman telah berhasil diselesaikan. Terima kasih telah berbelanja di Dekoruma! 🏠✨</div>
+  <div class="status-sub" style="color:#5c7a6a;" id="deliveredMsg">Pengiriman telah berhasil diselesaikan. Terima kasih telah berbelanja di Dekoruma! 🏠✨</div>
 </div>
 
 <!-- Map -->
-<div id="map" style="display:none;"></div>
+<div id="mapContainer" style="display:none;">
+  <div id="map"></div>
+</div>
 
 <!-- Info panel -->
 <div class="info-panel" id="infoPanel" style="display:none;">
-  <div class="info-customer" id="infoCustomer">—</div>
-  <div class="info-order" id="infoOrderNo">NO. ORDER: —</div>
+  <div class="info-customer" id="infoCustomer">Driver sedang dalam perjalanan</div>
+  <div class="info-order-no" id="infoOrderNo">NO. ORDER: —</div>
   <div class="info-rows">
     <div class="info-row">
       <div class="info-row-icon">🟢</div>
-      <div class="info-row-text">
+      <div>
         <div class="lbl">Status</div>
-        <div class="val green" id="infoStatus">Driver sedang OTW</div>
+        <div class="val green" id="infoStatus">Driver sedang OTW 🚚</div>
       </div>
     </div>
     <div class="info-row">
       <div class="info-row-icon">📍</div>
-      <div class="info-row-text">
+      <div>
         <div class="lbl">Tujuan pengiriman</div>
-        <div class="val blue" id="infoAlamat">—</div>
+        <div class="val blue" id="infoAlamat">Memuat...</div>
       </div>
     </div>
     <div class="info-row">
       <div class="info-row-icon">🎯</div>
-      <div class="info-row-text">
+      <div>
         <div class="lbl">Akurasi GPS</div>
         <div class="val orange" id="infoAcc">—</div>
       </div>
     </div>
     <div class="info-row">
       <div class="info-row-icon">🕐</div>
-      <div class="info-row-text">
+      <div>
         <div class="lbl">Update terakhir</div>
         <div class="val" id="infoLastUpdate">—</div>
       </div>
@@ -128,7 +127,9 @@ body{display:flex;flex-direction:column;}
   </div>
 </div>
 
-<div class="footer-bar" id="footerBar" style="display:none;">Posisi diperbarui setiap 10 detik · Dekoruma Palembang</div>
+<div class="footer-bar" id="footerBar" style="display:none;">
+  Posisi diperbarui setiap 10 detik · Dekoruma Palembang
+</div>
 
 <script>
 // ════════════════════════════════════════════
@@ -139,191 +140,194 @@ const FIREBASE_CONFIG = {
   authDomain:        "ops-palembang.firebaseapp.com",
   databaseURL:       "https://ops-palembang-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:         "ops-palembang",
-  storageBucket:     "ps-palembang.firebasestorage.app",
+  storageBucket:     "ops-palembang.firebasestorage.app",
   messagingSenderId: "816088947240",
   appId:             "1:816088947240:web:2fff9a0d15f6afe541331d"
 };
 
-
-// ── Init Firebase ──
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
 
-// ── Ambil order key dari URL ──
 const params   = new URLSearchParams(window.location.search);
 const orderKey = params.get('order');
 
-// ── Leaflet map & markers ──
 let map          = null;
 let driverMarker = null;
 let destMarker   = null;
 let routeLine    = null;
 let destLatLng   = null;
-let firstLoad    = true;
+let mapReady     = false;
+let pendingGPS   = null;
+let pendingInfo  = null;
 
-function showOnly(id) {
+function showScreen(id) {
   ['screenLoading','screenNotFound','screenDelivered'].forEach(s => {
     document.getElementById(s).style.display = s === id ? 'flex' : 'none';
   });
   const isMap = id === 'map';
-  document.getElementById('map').style.display       = isMap ? 'block' : 'none';
-  document.getElementById('infoPanel').style.display = isMap ? 'block' : 'none';
-  document.getElementById('footerBar').style.display = isMap ? 'block' : 'none';
-  document.getElementById('liveBadge').style.display = isMap ? 'flex'  : 'none';
+  document.getElementById('mapContainer').style.display = isMap ? 'block' : 'none';
+  document.getElementById('infoPanel').style.display    = isMap ? 'block' : 'none';
+  document.getElementById('footerBar').style.display    = isMap ? 'block' : 'none';
+  document.getElementById('liveBadge').style.display    = isMap ? 'flex'  : 'none';
+
+  // Invalidate map size setelah container visible
+  if (isMap && map) {
+    setTimeout(() => { map.invalidateSize(); }, 100);
+  }
 }
 
 function initMap(lat, lng) {
   if (map) return;
-  map = L.map('map', { zoomControl: true, attributionControl: false }).setView([lat, lng], 15);
 
-  // OpenStreetMap tiles
+  map = L.map('map', {
+    zoomControl:       true,
+    attributionControl: false
+  }).setView([lat, lng], 15);
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  // Driver marker (biru, animasi pulse)
+  // Driver marker
   const driverIcon = L.divIcon({
     className: '',
-    html: '<div class="driver-pulse">🚚</div>',
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
+    html:      '<div class="driver-pulse">🚚</div>',
+    iconSize:  [40, 40],
+    iconAnchor:[20, 20],
+    popupAnchor:[0,-20]
   });
   driverMarker = L.marker([lat, lng], { icon: driverIcon }).addTo(map);
-  driverMarker.bindPopup('<b>Posisi Driver</b>').openPopup();
+  driverMarker.bindPopup('<b>Posisi Driver</b>');
+
+  mapReady = true;
+
+  // Proses data yang pending jika ada
+  if (pendingInfo) { applyInfo(pendingInfo); pendingInfo = null; }
+
+  // Fix ukuran peta setelah render
+  setTimeout(() => map.invalidateSize(), 200);
 }
 
-function updateDriverMarker(lat, lng) {
-  if (!map) { initMap(lat, lng); return; }
-
-  const newLatLng = L.latLng(lat, lng);
-  driverMarker.setLatLng(newLatLng);
-
-  // Smooth pan ke posisi driver kalau pertama kali
-  if (firstLoad) {
-    map.setView(newLatLng, 15);
-    firstLoad = false;
-  }
-
-  // Update garis rute driver → tujuan
-  drawRoute(newLatLng);
+function updateDriverPos(lat, lng) {
+  if (!map || !driverMarker) return;
+  const ll = L.latLng(lat, lng);
+  driverMarker.setLatLng(ll);
+  map.panTo(ll, { animate: true, duration: 1 });
+  drawRoute(ll);
 }
 
-function setDestination(alamat) {
-  if (!alamat || destLatLng) return;
+function applyInfo(info) {
+  document.getElementById('infoCustomer').textContent  = info.namaCustomer || 'Driver sedang dalam perjalanan';
+  document.getElementById('infoOrderNo').textContent   = 'NO. ORDER: ' + (info.noOrder || orderKey);
+  document.getElementById('infoAlamat').textContent    = info.alamat || '—';
+  document.getElementById('infoStatus').textContent    = (info.driver || 'Driver') + ' sedang OTW 🚚';
+  document.getElementById('headerSub').textContent     = 'Order #' + (info.noOrder || orderKey);
 
-  // Geocode alamat via Nominatim (OpenStreetMap gratis)
-  const query = encodeURIComponent(alamat + ', Palembang, Indonesia');
-  fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`)
+  // Geocode alamat → dest marker
+  if (info.alamat && !destLatLng && mapReady) geocodeAlamat(info.alamat);
+}
+
+function geocodeAlamat(alamat) {
+  const q = encodeURIComponent(alamat + ', Palembang, Indonesia');
+  fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=id`)
     .then(r => r.json())
     .then(data => {
       if (!data || !data.length) return;
-      const lat = parseFloat(data[0].lat);
-      const lng = parseFloat(data[0].lon);
-      destLatLng = L.latLng(lat, lng);
+      destLatLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
 
-      // Destination marker (hijau)
       const destIcon = L.divIcon({
         className: '',
-        html: '<div class="dest-marker">🏠</div>',
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
+        html:      '<div class="dest-icon">🏠</div>',
+        iconSize:  [36, 36],
+        iconAnchor:[18, 18],
+        popupAnchor:[0,-18]
       });
       if (destMarker) map.removeLayer(destMarker);
       destMarker = L.marker(destLatLng, { icon: destIcon }).addTo(map);
       destMarker.bindPopup('<b>Tujuan Pengiriman</b><br>' + alamat);
 
-      // Fit map to show both markers
+      // Fit bounds
       if (driverMarker) {
-        const bounds = L.latLngBounds([driverMarker.getLatLng(), destLatLng]);
-        map.fitBounds(bounds, { padding: [40, 40] });
+        map.fitBounds(
+          L.latLngBounds([driverMarker.getLatLng(), destLatLng]),
+          { padding: [50, 50], maxZoom: 15 }
+        );
       }
-
-      // Draw initial route
       if (driverMarker) drawRoute(driverMarker.getLatLng());
     })
-    .catch(e => console.warn('[MAP] Geocode error:', e));
+    .catch(e => console.warn('[GEOCODE]', e));
 }
 
-function drawRoute(driverLatLng) {
+function drawRoute(driverLL) {
   if (!destLatLng || !map) return;
-
-  // Gunakan OSRM untuk routing (gratis, tidak perlu API key)
-  const url = `https://router.project-osrm.org/route/v1/driving/${driverLatLng.lng},${driverLatLng.lat};${destLatLng.lng},${destLatLng.lat}?overview=full&geometries=geojson`;
-
+  const url = `https://router.project-osrm.org/route/v1/driving/${driverLL.lng},${driverLL.lat};${destLatLng.lng},${destLatLng.lat}?overview=full&geometries=geojson`;
   fetch(url)
     .then(r => r.json())
     .then(data => {
-      if (!data.routes || !data.routes.length) return;
+      if (!data.routes?.length) return;
       const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-
       if (routeLine) map.removeLayer(routeLine);
-      routeLine = L.polyline(coords, {
-        color:     '#5b8ef0',
-        weight:    4,
-        opacity:   0.8,
-        dashArray: '8, 4'
-      }).addTo(map);
+      routeLine = L.polyline(coords, { color:'#5b8ef0', weight:4, opacity:0.8, dashArray:'8,4' }).addTo(map);
     })
-    .catch(e => {
-      // Fallback: garis lurus jika OSRM gagal
+    .catch(() => {
+      // Fallback garis lurus
       if (routeLine) map.removeLayer(routeLine);
-      routeLine = L.polyline([driverLatLng, destLatLng], {
-        color: '#5b8ef0', weight: 3, opacity: 0.6, dashArray: '6,4'
-      }).addTo(map);
+      routeLine = L.polyline([driverLL, destLatLng], { color:'#5b8ef0', weight:3, opacity:0.6, dashArray:'6,4' }).addTo(map);
     });
 }
 
-function formatTime(ts) {
+function fmtTime(ts) {
   if (!ts) return '—';
   return new Date(ts).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 }
 
-// ── Listen Firebase ──
+// ── Firebase listener ──
 if (!orderKey) {
-  showOnly('screenNotFound');
+  showScreen('screenNotFound');
 } else {
-  document.getElementById('headerOrderNo').textContent = 'Order #' + orderKey;
-
-  const ref = db.ref(`tracking/${orderKey}`);
+  document.getElementById('headerSub').textContent = 'Order #' + orderKey;
+  const ref = db.ref('tracking/' + orderKey);
 
   ref.on('value', snap => {
     const data = snap.val();
-    if (!data) { showOnly('screenNotFound'); return; }
+
+    if (!data) { showScreen('screenNotFound'); return; }
 
     const gps  = data.gps  || {};
     const info = data.info || {};
 
-    // Delivered
+    // Cek delivered
     if (gps.status === 'delivered') {
-      showOnly('screenDelivered');
+      showScreen('screenDelivered');
       document.getElementById('deliveredMsg').textContent =
-        `Pesanan untuk ${info.namaCustomer||'Anda'} telah berhasil diterima. Terima kasih telah berbelanja di Dekoruma! 🏠✨`;
+        'Pesanan untuk ' + (info.namaCustomer || 'Anda') +
+        ' telah berhasil diterima. Terima kasih telah berbelanja di Dekoruma! 🏠✨';
       ref.off();
       return;
     }
 
-    // Active tracking
-    showOnly('map');
+    // Tampilkan map screen
+    showScreen('map');
 
     // Update info panel
-    document.getElementById('infoCustomer').textContent  = info.namaCustomer || 'Driver sedang dalam perjalanan';
-    document.getElementById('infoOrderNo').textContent   = 'NO. ORDER: ' + (info.noOrder || orderKey);
-    document.getElementById('infoAlamat').textContent    = info.alamat || '—';
-    document.getElementById('infoLastUpdate').textContent = formatTime(gps.ts);
-    document.getElementById('infoAcc').textContent       = gps.acc ? Math.round(gps.acc) + ' meter' : '—';
-    document.getElementById('infoStatus').textContent    = `${info.driver||'Driver'} sedang OTW 🚚`;
-
-    // Update map
-    if (gps.lat && gps.lng) {
-      updateDriverMarker(gps.lat, gps.lng);
+    if (info.namaCustomer || info.noOrder) {
+      if (mapReady) applyInfo(info);
+      else pendingInfo = info;
     }
 
-    // Set destination (hanya sekali)
-    if (info.alamat && !destLatLng && map) {
-      setDestination(info.alamat);
-    } else if (info.alamat && !destLatLng && gps.lat) {
-      // Map belum init tapi sudah ada alamat — init dulu lalu geocode
-      setTimeout(() => setDestination(info.alamat), 500);
+    // Update GPS
+    if (gps.lat && gps.lng) {
+      document.getElementById('infoLastUpdate').textContent = fmtTime(gps.ts);
+      document.getElementById('infoAcc').textContent = gps.acc ? Math.round(gps.acc) + ' meter' : '—';
+
+      if (!map) {
+        initMap(gps.lat, gps.lng);
+        // Geocode setelah map ready
+        if (info.alamat) setTimeout(() => geocodeAlamat(info.alamat), 300);
+      } else {
+        updateDriverPos(gps.lat, gps.lng);
+      }
     }
   });
 }
